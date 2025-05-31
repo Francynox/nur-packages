@@ -14,7 +14,10 @@
   modules = import ./modules; # NixOS modules
   overlays = import ./overlays; # nixpkgs overlays
 
-  example-package = pkgs.callPackage ./pkgs/example-package { };
+  kea = pkgs.callPackage ./pkgs/kea { };
+  softether = pkgs.callPackage ./pkgs/softether { };
+  bind = pkgs.callPackage ./pkgs/bind { };
+  adguardhome = pkgs.callPackage ./pkgs/adguardhome { };
   # some-qt5-package = pkgs.libsForQt5.callPackage ./pkgs/some-qt5-package { };
   # ...
 }
