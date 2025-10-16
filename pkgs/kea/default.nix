@@ -2,45 +2,53 @@
   stdenv,
   lib,
   fetchurl,
-
   # build time
   pkg-config,
   meson,
   ninja,
   python3,
-
   # runtime
   boost,
   log4cplus,
-  openssl
+  openssl,
 }:
-
 stdenv.mkDerivation rec {
   pname = "kea";
-  version = "2.7.9";
+  version = "3.1.2";
 
   src = fetchurl {
     url = "https://downloads.isc.org/isc/${pname}/${version}/${pname}-${version}.tar.xz";
-    hash = "sha256-pUSRb2khVUOYFbcm/GBA/63DgVkfZ6f7EDGS1wU+vJI=";
+    hash = "sha256-iF1KM2Gr30yBBOcHSifffZgnoloQ0SSR4/Ycx2wN/30=";
   };
 
   patches = [
-    ./dont-create-var.patch
+    ./dont-create-system-paths.patch
   ];
 
-  preConfigure = ''
+  postPatch = ''
     patchShebangs scripts/grabber.py
+
+    substituteInPlace ./src/hooks/dhcp/radius/meson.build --replace-fail 'install_dir: SYSCONFDIR' "install_dir: '$out/etc'"
+    substituteInPlace ./src/bin/keactrl/meson.build --replace-fail "kea_configfiles_destdir = SYSCONFDIR" "kea_configfiles_destdir = '$out/etc'"
   '';
 
   mesonFlags = [
-    "-Dlocalstatedir=/var"
-    "-Dsysconfdir=${placeholder "out"}/etc"
-    "-Dcrypto=openssl"
-    "-Dkrb5=disabled"
-    "-Dmysql=disabled"
-    "-Dnetconf=disabled"
-    "-Dpostgresql=disabled"
+    (lib.mesonOption "crypto" "openssl")
+    (lib.mesonEnable "krb5" false)
+    (lib.mesonEnable "mysql" false)
+    (lib.mesonEnable "netconf" false)
+    (lib.mesonEnable "postgresql" false)
+    (lib.mesonOption "localstatedir" "/var")
+    (lib.mesonOption "runstatedir" "/run")
+    (lib.mesonOption "sysconfdir" "/etc/kea")
   ];
+
+  postConfigure = ''
+    # Mangle embedded paths to dev-only inputs.
+    for file in config.report meson-info/intro*.json; do
+      sed -e "s|$NIX_STORE/[a-z0-9]\{32\}-|$NIX_STORE/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-|g" -i "$file"
+    done
+  '';
 
   nativeBuildInputs = [
     pkg-config

@@ -5,9 +5,9 @@
 # Having pkgs default to <nixpkgs> is fine though, and it lets you use short
 # commands such as:
 #     nix-build -A mypackage
-
-{ pkgs ? import <nixpkgs> { } }:
-
+{
+  pkgs ? import <nixpkgs> { },
+}:
 {
   # The `lib`, `modules`, and `overlays` names are special
   lib = import ./lib { inherit pkgs; }; # functions
@@ -15,9 +15,9 @@
   overlays = import ./overlays; # nixpkgs overlays
 
   kea = pkgs.callPackage ./pkgs/kea { };
-  softether = pkgs.callPackage ./pkgs/softether { };
   bind = pkgs.callPackage ./pkgs/bind { };
   adguardhome = pkgs.callPackage ./pkgs/adguardhome { };
+  unbound = pkgs.callPackage ./pkgs/unbound { };
   # some-qt5-package = pkgs.libsForQt5.callPackage ./pkgs/some-qt5-package { };
   # ...
 }
