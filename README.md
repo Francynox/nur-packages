@@ -53,17 +53,22 @@ Use this repository in `flake.nix`:
    * Remember to mark the broken packages as `broken = true;` in the `meta`
      attribute, or travis (and consequently caching) will fail!
    * Library functions, modules and overlays go in the respective directories
-2. test build a single package
+2. build a single package or test
    ```sh
-   nix-build -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/nixpkgs-unstable.tar.gz --arg pkgs 'import <nixpkgs> {}' -A some-pakcage
+   nix build .#some-pakcage --override-input nixpkgs github:NixOS/nixpkgs/nixos-unstable [-L]
    ```
    or
    ```sh
-   nix-build --check -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/nixpkgs-unstable.tar.gz --arg pkgs 'import <nixpkgs> {}' -A some-pakcage
+   nix build .#some-pakcage --override-input nixpkgs github:NixOS/nixpkgs/nixos-unstable [-L] --rebuild
    ```
-3. test exec
+3. exec
   ```sh
   nix shell .#some-pakcage
+  ```
+4. check
+  ```sh
+  nix build ".#checks.x86_64-linux.some-pakcage"
+  nix build ".#checks.x86_64-linux.some-pakcage" --option sandbox false -L # for internet connection
   ```
 
 ## LICENSE
