@@ -1,6 +1,5 @@
-# You can use this file as a nixpkgs overlay. This is useful in the
-# case where you don't want to add the whole NUR namespace to your
-# configuration.
+# This overlay adds all packages from this repository directly into your main `pkgs` set.
+# Using this overlay may cause package name conflicts.
 self: super:
 let
   isReserved = n: n == "lib" || n == "overlays" || n == "modules";
@@ -8,7 +7,7 @@ let
     name = n;
     value = v;
   };
-  nurAttrs = import ./default.nix { pkgs = super; };
+  nurAttrs = import ../default.nix { pkgs = super; };
 in
 builtins.listToAttrs (
   map (n: nameValuePair n nurAttrs.${n}) (

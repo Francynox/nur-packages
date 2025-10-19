@@ -1,7 +1,4 @@
 final: prev: {
-  francynox =
-    let
-      nurAllAttrs = import ../default.nix { pkgs = prev; };
-    in
-    prev.lib.filterAttrs (name: value: prev.lib.isDerivation value) nurAllAttrs;
+  # Import the logic from the top-level overlay and assign its result to the 'francynox' namespace.
+  francynox = (import ./flat.nix) final prev;
 }
