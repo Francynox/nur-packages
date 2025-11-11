@@ -8,33 +8,54 @@
   outputs =
     { self, nixpkgs }:
     let
-      forAllSystems = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
+      nurModules = import ./modules;
+      nurOverlays = import ./overlays;
+
+      systems = nixpkgs.lib.systems.flakeExposed;
+      forAllSystems = nixpkgs.lib.genAttrs systems;
 
       perSystem =
         system:
         let
           pkgs = import nixpkgs { inherit system; };
 
-          nurForSystem = import ./default.nix { inherit pkgs; };
+          nur = import ./default.nix { inherit pkgs; };
 
           pkgsForTests = import nixpkgs {
             inherit system;
-            overlays = [ nurForSystem.overlays.namespace ];
+            overlays = [ nur.overlays.namespace ];
           };
 
-          testsForSystem = import ./tests {
+          tests = import ./tests {
             pkgs = pkgsForTests;
-            modules = nixpkgs.lib.attrValues nurForSystem.modules;
+            modules = nixpkgs.lib.attrValues nur.modules;
           };
+
+          isSupported =
+            package:
+            let
+              platforms = package.meta.platforms or null;
+            in
+            nixpkgs.lib.isDerivation package
+            && (
+              platforms == null
+              || builtins.any (p: nixpkgs.lib.meta.platformMatch pkgs.stdenv.hostPlatform p) platforms
+            )
+            && !(package.meta.broken or false);
+
+          isCheckable =
+            testName:
+            let
+              package = nur.${testName};
+            in
+            isSupported package;
 
         in
         {
           formatter = pkgs.nixfmt-tree;
-          legacyPackages = nurForSystem;
-          packages = nixpkgs.lib.filterAttrs (_: v: nixpkgs.lib.isDerivation v) nurForSystem;
-          nixosModules = nurForSystem.modules;
-          overlays = nurForSystem.overlays.namespace;
-          checks = nixpkgs.lib.filterAttrs (_: v: nixpkgs.lib.isDerivation v) testsForSystem;
+          legacyPackages = nur;
+          packages = nixpkgs.lib.filterAttrs (_: v: isSupported v) nur;
+          checks = nixpkgs.lib.filterAttrs (n: _: isCheckable n) tests;
         };
 
     in
@@ -42,8 +63,9 @@
       formatter = forAllSystems (system: (perSystem system).formatter);
       legacyPackages = forAllSystems (system: (perSystem system).legacyPackages);
       packages = forAllSystems (system: (perSystem system).packages);
-      nixosModules = forAllSystems (system: (perSystem system).nixosModules);
-      overlays = forAllSystems (system: (perSystem system).overlays);
       checks = forAllSystems (system: (perSystem system).checks);
+
+      nixosModules = nurModules;
+      overlays = nurOverlays;
     };
 }
