@@ -63,6 +63,8 @@ stdenv.mkDerivation rec {
     openssl
   ];
 
+  passthru.updateScript = ./update.sh;
+
   meta = with lib; {
     homepage = "https://kea.isc.org/";
     description = "ISC KEA - DHCP server";

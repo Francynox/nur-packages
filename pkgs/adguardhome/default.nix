@@ -16,6 +16,8 @@ stdenv.mkDerivation rec {
     install -m755 -D ./AdGuardHome $out/bin/adguardhome
   '';
 
+  passthru.updateScript = ./update.sh;
+
   meta = with lib; {
     homepage = "https://github.com/AdguardTeam/AdGuardHome";
     description = "Network-wide ads & trackers blocking DNS server";

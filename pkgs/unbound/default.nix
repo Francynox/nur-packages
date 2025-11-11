@@ -82,6 +82,8 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
+  passthru.updateScript = ./update.sh;
+
   meta = with lib; {
     homepage = "https://nlnetlabs.nl/projects/unbound/about/";
     description = "UNBOUND - validating, recursive, caching DNS resolver";

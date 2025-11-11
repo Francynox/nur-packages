@@ -81,6 +81,8 @@ stdenv.mkDerivation rec {
     done
   '';
 
+  passthru.updateScript = ./update.sh;
+
   meta = with lib; {
     homepage = "https://www.isc.org/bind/";
     description = "ISC BIND - Domain Name Server";
