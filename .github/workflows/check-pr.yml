@@ -6,6 +6,10 @@ on:
       - main
       - master
 
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+
 jobs:
   check-packages:
     runs-on: ubuntu-latest
