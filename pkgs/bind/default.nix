@@ -40,6 +40,7 @@ stdenv.mkDerivation rec {
     (lib.mesonEnable "dnstap" false)
     (lib.mesonEnable "doc" false)
     (lib.mesonEnable "doh" true)
+    (lib.mesonEnable "fuzzing" false)
     (lib.mesonEnable "geoip" false)
     (lib.mesonEnable "gssapi" false)
     (lib.mesonEnable "idn" true)
