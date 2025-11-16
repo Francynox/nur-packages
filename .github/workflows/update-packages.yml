@@ -3,7 +3,7 @@ name: "Auto-Update Packages"
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 5 * * *"
+    - cron: 41 15 * * *
 
 jobs:
   list-all-packages:
