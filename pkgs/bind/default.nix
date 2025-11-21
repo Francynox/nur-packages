@@ -23,11 +23,11 @@
 }:
 stdenv.mkDerivation rec {
   pname = "bind";
-  version = "9.21.14";
+  version = "9.21.15";
 
   src = fetchurl {
     url = "https://downloads.isc.org/isc/${pname}9/${version}/${pname}-${version}.tar.xz";
-    hash = "sha256-ADuU0UBOwzF08olR3kuiYXQt4zPLhp5rkJ8a2jJh/p8=";
+    hash = "sha256-+mpXYRiPfT4cuolovQKgM7360JNZBfrasJKCsvsuwwQ=";
   };
 
   patches = [
@@ -35,7 +35,6 @@ stdenv.mkDerivation rec {
   ];
 
   mesonFlags = [
-    (lib.mesonEnable "cap" true)
     (lib.mesonEnable "cmocka" false)
     (lib.mesonEnable "dnstap" false)
     (lib.mesonEnable "doc" false)
