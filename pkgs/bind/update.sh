@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-source update-helper.sh
-
 PKG_NAME="bind"
 PAGE_URL="https://www.isc.org/download/#BIND"
 PUP_SELECTOR='div#BIND :parent-of(td:contains("Development")) td:first-child text{}'

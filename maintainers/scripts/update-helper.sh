@@ -1,7 +1,5 @@
 #! /usr/bin/env bash
 
-set -euo pipefail
-
 validate_version() {
   local version="$1"
   local source="$2"

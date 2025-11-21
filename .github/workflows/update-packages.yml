@@ -63,7 +63,11 @@ jobs:
 
       - name: Run update script for ${{ matrix.package }}
         run: |
-          nix-shell ./maintainers/scripts/update.nix --argstr package ${{ matrix.package }}
+          SCRIPT_PATH=$(nix-build ./maintainers/scripts/update.nix \
+            --argstr package "${{ matrix.package }}" \
+            --no-out-link)
+
+          "$SCRIPT_PATH/bin/update-${{ matrix.package }}"
 
       - name: Create Pull Request if changes detected
         uses: peter-evans/create-pull-request@v7

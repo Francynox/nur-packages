@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-source update-helper.sh
-
 PKG_NAME="unbound"
 API_URL="https://api.github.com/repos/NLnetLabs/unbound/releases?per_page=5"
 JQ_FILTER=".[0].tag_name | ltrimstr(\"release-\")"
