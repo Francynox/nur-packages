@@ -35,7 +35,6 @@ stdenv.mkDerivation rec {
   ];
 
   mesonFlags = [
-    (lib.mesonEnable "cap" true)
     (lib.mesonEnable "cmocka" false)
     (lib.mesonEnable "dnstap" false)
     (lib.mesonEnable "doc" false)
