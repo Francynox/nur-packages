@@ -2,6 +2,7 @@
   stdenv,
   lib,
   fetchurl,
+  autoPatchelfHook
 }:
 stdenv.mkDerivation rec {
   pname = "adguardhome";
@@ -12,8 +13,19 @@ stdenv.mkDerivation rec {
     hash = "sha256-M7Dd88zc21iMcuylIY+h4vsGfbtq2jZlecaFrGOIykU=";
   };
 
+  nativeBuildInputs = [
+    autoPatchelfHook
+  ];
+
+  dontConfigure = true;
+  dontBuild = true;
+
   installPhase = ''
+    runHook preInstall
+
     install -m755 -D ./AdGuardHome $out/bin/adguardhome
+
+    runHook postInstall
   '';
 
   passthru.updateScript = ./update.sh;
@@ -23,5 +35,6 @@ stdenv.mkDerivation rec {
     description = "Network-wide ads & trackers blocking DNS server";
     license = licenses.gpl3Only;
     platforms = [ "x86_64-linux" ];
+    mainProgram = "adguardhome";
   };
 }

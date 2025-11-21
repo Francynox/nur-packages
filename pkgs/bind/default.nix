@@ -7,7 +7,6 @@
   ninja,
   perl,
   pkg-config,
-  removeReferencesTo,
   # runtime
   liburcu,
   libuv,
@@ -75,12 +74,6 @@ stdenv.mkDerivation rec {
     libedit
   ];
 
-  postInstall = ''
-    for f in "$out/lib/"*.la; do
-      sed -i "$f" -e 's|-L${openssl.dev}|-L${lib.getLib openssl}|g'
-    done
-  '';
-
   passthru.updateScript = ./update.sh;
 
   meta = with lib; {
@@ -88,5 +81,6 @@ stdenv.mkDerivation rec {
     description = "ISC BIND - Domain Name Server";
     license = licenses.mpl20;
     platforms = [ "x86_64-linux" ];
+    mainProgram = "named";
   };
 }

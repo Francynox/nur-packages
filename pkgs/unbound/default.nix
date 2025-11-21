@@ -89,5 +89,6 @@ stdenv.mkDerivation rec {
     description = "UNBOUND - validating, recursive, caching DNS resolver";
     license = licenses.bsd3;
     platforms = [ "x86_64-linux" ];
+    mainProgram = "unbound";
   };
 }
