@@ -21,6 +21,7 @@ jobs:
           - github:NixOS/nixpkgs/nixos-unstable
           - github:NixOS/nixpkgs/nixos-25.05
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5

@@ -44,14 +44,10 @@ let
 
   isLocalBuild = package: package.preferLocalBuild or false;
 
-  isCachablePackage =
-    package: isFree package && isSupported package && !isLocalBuild package;
+  isCachablePackage = package: isFree package && isSupported package && !isLocalBuild package;
 
-  isCachableCheck = testName:
-    if builtins.hasAttr testName nur then
-      isCachablePackage nur.${testName}
-    else
-      true;
+  isCachableCheck =
+    testName: if builtins.hasAttr testName nur then isCachablePackage nur.${testName} else true;
 
   filteredPackages = nixpkgs.lib.filterAttrs (_: v: isCachablePackage v) nur;
   filteredChecks = nixpkgs.lib.filterAttrs (n: _: isCachableCheck n) tests;
