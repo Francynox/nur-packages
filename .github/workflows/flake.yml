@@ -8,22 +8,61 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
+
     steps:
+      - name: Generate GitHub App Token
+        uses: actions/create-github-app-token@v1
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: cachix/install-nix-action@v31
-
-      - run: nix flake update
-
-      - uses: stefanzweifel/git-auto-commit-action@v7
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
         with:
-          commit_message: "chore(deps): bump flake.lock"
-          commit_user_name: Flake Bot
-          commit_options: --no-verify --signoff
-          commit_author: Flake Bot <actions@github.com>
-          branch: main
-          file_pattern: flake.lock
-          skip_dirty_check: false
-          skip_fetch: true
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update flake.lock
+        id: update
+        run: |
+          nix flake update
+          
+          if [[ -n $(git status --porcelain flake.lock) ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No updates found."
+          fi
+
+      - name: Create Pull Request
+        if: steps.update.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        id: cpr
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          author: Flake Bot <actions@github.com>
+          committer: Flake Bot <actions@github.com>
+          commit-message: "chore(deps): bump flake.lock"
+          title: "chore(deps): bump flake.lock"
+          body: |
+            Automated update of `flake.lock`.
+            
+            This PR updates the flake inputs to their latest versions.
+            If the CI passes, this will be auto-merged.
+          branch: "chore/update-flake-lock"
+          delete-branch: true
+
+      - name: Enable Auto-Merge
+        if: steps.update.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
+        run: |
+          gh pr merge --auto --merge "$PR_URL"
