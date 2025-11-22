@@ -93,6 +93,7 @@ in
         RuntimeDirectory = "named";
         RuntimeDirectoryPreserve = true;
         StateDirectory = "bind";
+        StateDirectoryMode = "0700";
         CacheDirectory = "bind";
         Restart = "on-failure";
         # Security

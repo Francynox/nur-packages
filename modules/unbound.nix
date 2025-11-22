@@ -60,6 +60,10 @@ in
             username: ""
             root-hints: "${pkgs.dns-root-data}/root.hints"
 
+            remote-control:
+              control-enable: yes
+              control-interface: /run/unbound/unbound.ctl
+
             include: "${cfg.configFile}"
         '';
       in
@@ -69,16 +73,13 @@ in
         wants = [ "network-online.target" ];
         wantedBy = [ "multi-user.target" ];
         preStart = ''
-          until ${cfg.package}/bin/unbound-anchor; do
-            echo "unbound-anchor failed, new try in 5 seconds..." >&2
-            sleep 5
-          done
+          ${cfg.package}/bin/unbound-anchor
         '';
         restartTriggers = cfg.extraRestartTriggers;
         serviceConfig = {
           Type = "notify";
           ExecStart = "${cfg.package}/bin/unbound -d -c ${configFile} ${escapeShellArgs cfg.extraArgs}";
-          ExecReload = "${cfg.package}/bin/unbound-control reload";
+          ExecReload = "${cfg.package}/bin/unbound-control -c ${configFile} reload";
           ExecStop = "${cfg.package}/sbin/unbound-control stop";
           AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
           CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
@@ -88,6 +89,7 @@ in
           RuntimeDirectory = "unbound";
           RuntimeDirectoryPreserve = true;
           StateDirectory = "unbound";
+          StateDirectoryMode = "0700";
           CacheDirectory = "unbound";
           Restart = "on-failure";
           # Security
@@ -106,7 +108,7 @@ in
           ProtectProc = "invisible";
           ProcSubset = "pid";
           RemoveIPC = true;
-          RestrictAddressFamilies = [ "AF_UNIX AF_INET AF_INET6" ];
+          RestrictAddressFamilies = [ "AF_UNIX AF_INET AF_INET6 AF_NETLINK" ];
           LockPersonality = true;
           MemoryDenyWriteExecute = true;
           RestrictRealtime = true;

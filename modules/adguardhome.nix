@@ -83,6 +83,7 @@ in
           RuntimeDirectory = "adguardhome";
           RuntimeDirectoryPreserve = true;
           StateDirectory = "adguardhome";
+          StateDirectoryMode = "0700";
           Restart = "on-failure";
           # Security
           NoNewPrivileges = true;

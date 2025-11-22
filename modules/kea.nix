@@ -16,6 +16,7 @@ let
     RuntimeDirectoryPreserve = true;
     RuntimeDirectoryMode = "0750";
     StateDirectory = "kea";
+    StateDirectoryMode = "0750";
     CacheDirectory = "kea";
     Restart = "on-failure";
     ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
@@ -44,6 +45,76 @@ let
     SystemCallArchitectures = "native";
     SystemCallFilter = "~@clock @cpu-emulation @debug @module @mount @obsolete @privileged @raw-io @reboot @resources @swap";
   };
+
+  mkKeaComponent =
+    name: description:
+    mkOption {
+      description = description;
+      default = { };
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Kea ${name}";
+
+          configFile = mkOption {
+            type = types.nullOr types.path;
+            default = null;
+            description = "Path to the Kea ${name} configuration file.";
+          };
+
+          extraArgs = mkOption {
+            type = types.listOf types.str;
+            default = [ ];
+            description = "Additional command-line arguments.";
+          };
+
+          extraRestartTriggers = mkOption {
+            type = types.listOf types.path;
+            default = [ ];
+            description = "Extra derivations to trigger a service restart.";
+          };
+        };
+      };
+    };
+
+  mkKeaService =
+    {
+      componentName,
+      binaryName,
+      componentCfg,
+      capabilities ? [ ],
+    }:
+    mkIf componentCfg.enable {
+      assertions = [
+        {
+          assertion = componentCfg.configFile != null;
+          message = "services.francynox.kea.${componentName}.configFile must be set.";
+        }
+      ];
+
+      systemd.services."kea-${componentName}" = {
+        description = "Kea ${componentName} (francynox)";
+        after = [
+          "network-online.target"
+          "time-sync.target"
+        ];
+        wants = [ "network-online.target" ];
+        wantedBy = [ "multi-user.target" ];
+
+        environment = {
+          KEA_PIDFILE_DIR = "/run/kea";
+          KEA_LOCKFILE_DIR = "/run/kea";
+        };
+
+        restartTriggers = componentCfg.extraRestartTriggers ++ [ componentCfg.configFile ];
+
+        serviceConfig = commonServiceConfig // {
+          ExecStart = "${cfg.package}/bin/${binaryName} -c ${componentCfg.configFile} ${escapeShellArgs componentCfg.extraArgs}";
+          AmbientCapabilities = capabilities;
+          CapabilityBoundingSet = capabilities;
+        };
+      };
+    };
+
 in
 {
   options.services.francynox.kea = {
@@ -54,114 +125,18 @@ in
       description = "The Kea package (from francynox NUR) to use for all Kea services.";
     };
 
-    ctrl-agent = mkOption {
-      description = "Kea Control Agent configuration. (francynox NUR version)";
-      default = { };
-      type = types.submodule {
-        options = {
-          enable = mkEnableOption "Kea Control Agent daemon";
-          extraArgs = mkOption {
-            type = types.listOf types.str;
-            default = [ ];
-            description = "List of additional arguments to pass to the daemon.";
-          };
-          configFile = mkOption {
-            type = types.nullOr types.path;
-            default = null;
-            description = "Path to the Kea Control Agent configuration file.";
-            example = literalExpression "/path/to/your/kea-ctrl-agent.json";
-          };
-          extraRestartTriggers = mkOption {
-            type = types.listOf types.path;
-            default = [ ];
-            description = "A list of extra derivations to trigger a service restart when changed.";
-          };
-        };
-      };
-    };
+    ctrl-agent = mkKeaComponent "Control Agent" "Kea Control Agent configuration (francynox NUR version).";
 
-    dhcp4 = mkOption {
-      description = "Kea DHCPv4 Server configuration. (francynox NUR version)";
-      default = { };
-      type = types.submodule {
-        options = {
-          enable = mkEnableOption "Kea DHCPv4 server";
-          extraArgs = mkOption {
-            type = types.listOf types.str;
-            default = [ ];
-            description = "Additional arguments.";
-          };
-          configFile = mkOption {
-            type = types.nullOr types.path;
-            default = null;
-            description = "Path to the Kea DHCPv4 configuration file.";
-            example = literalExpression "/path/to/your/kea-dhcp4.json";
-          };
-          extraRestartTriggers = mkOption {
-            type = types.listOf types.path;
-            default = [ ];
-            description = "A list of extra derivations to trigger a service restart when changed.";
-          };
-        };
-      };
-    };
+    dhcp4 = mkKeaComponent "DHCPv4 Server" "Kea DHCPv4 Server configuration (francynox NUR version).";
 
-    dhcp6 = mkOption {
-      description = "Kea DHCPv6 Server configuration. (francynox NUR version)";
-      default = { };
-      type = types.submodule {
-        options = {
-          enable = mkEnableOption "Kea DHCPv6 server";
-          extraArgs = mkOption {
-            type = types.listOf types.str;
-            default = [ ];
-            description = "Additional arguments.";
-          };
-          configFile = mkOption {
-            type = types.nullOr types.path;
-            default = null;
-            description = "Path to the Kea DHCPv6 configuration file.";
-            example = literalExpression "/path/to/your/kea-dhcp6.json";
-          };
-          extraRestartTriggers = mkOption {
-            type = types.listOf types.path;
-            default = [ ];
-            description = "A list of extra derivations to trigger a service restart when changed.";
-          };
-        };
-      };
-    };
+    dhcp6 = mkKeaComponent "DHCPv6 Server" "Kea DHCPv6 Server configuration (francynox NUR version).";
 
-    dhcp-ddns = mkOption {
-      description = "Kea DHCP-DDNS module configuration. (francynox NUR version)";
-      default = { };
-      type = types.submodule {
-        options = {
-          enable = mkEnableOption "Kea DHCP-DDNS server";
-          extraArgs = mkOption {
-            type = types.listOf types.str;
-            default = [ ];
-            description = "Additional arguments.";
-          };
-          configFile = mkOption {
-            type = types.nullOr types.path;
-            default = null;
-            description = "Path to the Kea DHCP-DDNS configuration file.";
-            example = literalExpression "/path/to/your/kea-dhcp-ddns.json";
-          };
-          extraRestartTriggers = mkOption {
-            type = types.listOf types.path;
-            default = [ ];
-            description = "A list of extra derivations to trigger a service restart when changed.";
-          };
-        };
-      };
-    };
+    dhcp-ddns = mkKeaComponent "DHCP-DDNS Server" "Kea DHCP-DDNS module configuration (francynox NUR version).";
   };
 
   config =
     mkIf
-      (any (component: component.enable) [
+      (any (c: c.enable) [
         cfg.ctrl-agent
         cfg.dhcp4
         cfg.dhcp6
@@ -170,6 +145,7 @@ in
       (mkMerge [
         {
           environment.systemPackages = [ cfg.package ];
+
           users.users.kea = {
             isSystemUser = true;
             group = "kea";
@@ -177,130 +153,34 @@ in
           users.groups.kea = { };
         }
 
-        (mkIf cfg.ctrl-agent.enable {
-          assertions = [
-            {
-              assertion = cfg.ctrl-agent.configFile != null;
-              message = "services.francynox.kea.ctrl-agent.configFile must be set when services.francynox.kea.ctrl-agent.enable is true.";
-            }
-          ];
-          systemd.services."kea-ctrl-agent" = {
-            description = "Kea Control Agent (francynox)";
-            after = [
-              "network-online.target"
-              "time-sync.target"
-            ];
-            wants = [ "network-online.target" ];
-            environment = {
-              KEA_PIDFILE_DIR = "/run/kea";
-              KEA_LOCKFILE_DIR = "/run/kea";
-            };
-            restartTriggers = cfg.ctrl-agent.extraRestartTriggers;
-            serviceConfig = {
-              ExecStart = "${cfg.package}/bin/kea-ctrl-agent -c ${cfg.ctrl-agent.configFile} ${escapeShellArgs cfg.ctrl-agent.extraArgs}";
-              KillMode = "process";
-            }
-            // commonServiceConfig;
-          };
+        (mkKeaService {
+          componentName = "ctrl-agent";
+          binaryName = "kea-ctrl-agent";
+          componentCfg = cfg.ctrl-agent;
         })
 
-        (mkIf cfg.dhcp4.enable {
-          assertions = [
-            {
-              assertion = cfg.dhcp4.configFile != null;
-              message = "services.francynox.kea.dhcp4.configFile must be set when services.francynox.kea.dhcp4.enable is true.";
-            }
+        (mkKeaService {
+          componentName = "dhcp4";
+          binaryName = "kea-dhcp4";
+          componentCfg = cfg.dhcp4;
+          capabilities = [
+            "CAP_NET_BIND_SERVICE"
+            "CAP_NET_RAW"
           ];
-          systemd.services."kea-dhcp4" = {
-            description = "Kea DHCPv4 Server (francynox)";
-            after = [
-              "network-online.target"
-              "time-sync.target"
-            ];
-            wants = [
-              "network-online.target"
-            ];
-            wantedBy = [ "multi-user.target" ];
-            environment = {
-              KEA_PIDFILE_DIR = "/run/kea";
-              KEA_LOCKFILE_DIR = "/run/kea";
-            };
-            restartTriggers = cfg.dhcp4.extraRestartTriggers;
-            serviceConfig = {
-              ExecStart = "${cfg.package}/bin/kea-dhcp4 -c ${cfg.dhcp4.configFile} ${escapeShellArgs cfg.dhcp4.extraArgs}";
-              AmbientCapabilities = [
-                "CAP_NET_BIND_SERVICE"
-                "CAP_NET_RAW"
-              ];
-              CapabilityBoundingSet = [
-                "CAP_NET_BIND_SERVICE"
-                "CAP_NET_RAW"
-              ];
-            }
-            // commonServiceConfig;
-          };
         })
 
-        (mkIf cfg.dhcp6.enable {
-          assertions = [
-            {
-              assertion = cfg.dhcp6.configFile != null;
-              message = "services.francynox.kea.dhcp6.configFile must be set when services.francynox.kea.dhcp6.enable is true.";
-            }
-          ];
-          systemd.services."kea-dhcp6" = {
-            description = "Kea DHCPv6 Server (francynox)";
-            after = [
-              "network-online.target"
-              "time-sync.target"
-            ];
-            wants = [
-              "network-online.target"
-            ];
-            wantedBy = [ "multi-user.target" ];
-            environment = {
-              KEA_PIDFILE_DIR = "/run/kea";
-              KEA_LOCKFILE_DIR = "/run/kea";
-            };
-            restartTriggers = cfg.dhcp6.extraRestartTriggers;
-            serviceConfig = {
-              ExecStart = "${cfg.package}/bin/kea-dhcp6 -c ${cfg.dhcp6.configFile} ${escapeShellArgs cfg.dhcp6.extraArgs}";
-              AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
-              CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-            }
-            // commonServiceConfig;
-          };
+        (mkKeaService {
+          componentName = "dhcp6";
+          binaryName = "kea-dhcp6";
+          componentCfg = cfg.dhcp6;
+          capabilities = [ "CAP_NET_BIND_SERVICE" ];
         })
 
-        (mkIf cfg.dhcp-ddns.enable {
-          assertions = [
-            {
-              assertion = cfg.dhcp-ddns.configFile != null;
-              message = "services.francynox.kea.dhcp-ddns.configFile must be set when services.francynox.kea.dhcp-ddns.enable is true.";
-            }
-          ];
-          systemd.services."kea-dhcp-ddns" = {
-            description = "Kea DHCP-DDNS Server (francynox)";
-            after = [
-              "network-online.target"
-              "time-sync.target"
-            ];
-            wants = [
-              "network-online.target"
-            ];
-            wantedBy = [ "multi-user.target" ];
-            environment = {
-              KEA_PIDFILE_DIR = "/run/kea";
-              KEA_LOCKFILE_DIR = "/run/kea";
-            };
-            restartTriggers = cfg.dhcp-ddns.extraRestartTriggers;
-            serviceConfig = {
-              ExecStart = "${cfg.package}/bin/kea-dhcp-ddns -c ${cfg.dhcp-ddns.configFile} ${escapeShellArgs cfg.dhcp-ddns.extraArgs}";
-              AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
-              CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-            }
-            // commonServiceConfig;
-          };
+        (mkKeaService {
+          componentName = "dhcp-ddns";
+          binaryName = "kea-dhcp-ddns";
+          componentCfg = cfg.dhcp-ddns;
+          capabilities = [ "CAP_NET_BIND_SERVICE" ];
         })
       ]);
 }
