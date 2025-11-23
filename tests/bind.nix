@@ -56,19 +56,50 @@ pkgs.testers.runNixOSTest {
         };
     };
 
-  testScript = ''
-    bind.wait_for_unit("named.service")
+  testScript =
+    { ... }:
+    ''
+      def run_checks():
+        bind.wait_for_unit("named.service")
+        bind.wait_for_open_port(53)
 
-    bind.succeed("test -f /var/lib/bind/db.example.com")
+        bind.succeed("test -f /var/lib/bind/db.example.com")
 
-    bind.succeed("dig @localhost ns1.example.com +short | grep 127.0.0.1")
+        bind.succeed("dig @localhost ns1.example.com +short | grep 127.0.0.1")
 
-    bind.succeed("echo -e 'server 127.0.0.1 \n zone example.com \n update add client.example.com 3600 A 127.0.0.2 \n send' | nsupdate")
-    bind.succeed("dig @localhost client.example.com +short | grep 127.0.0.2")
+        cmd_update = """
+        echo -e 'server 127.0.0.1
+        zone example.com
+        update add client.example.com 3600 A 127.0.0.2
+        send' | nsupdate
+        """
+        bind.succeed(cmd_update)
 
-    bind.succeed("rndc sync")
-    bind.wait_until_succeeds("grep -q client.example.com /var/lib/bind/db.example.com")
+        bind.succeed("dig @localhost client.example.com +short | grep 127.0.0.2")
 
-    bind.log(bind.execute("systemd-analyze security named.service | grep 'exposure'")[1])
-  '';
+        bind.succeed("rndc sync")
+        bind.wait_until_succeeds("grep -q client.example.com /var/lib/bind/db.example.com")
+
+      def security_score():
+        security_score = bind.succeed("systemd-analyze security named.service --no-pager")
+        bind.log(f"Security Analysis:\n{security_score}")
+        if "UNSAFE" in security_score:
+          raise Exception("Bind service security level is UNSAFE!")
+
+      start_all()
+
+      with subtest("Run Basic Checks"):
+        run_checks()
+
+      with subtest("Verify hardening"):
+        security_score()
+
+      with subtest("Verify Service Reload"):
+        bind.succeed("systemctl reload named.service")
+        run_checks()
+
+      with subtest("Verify Service Restart"):
+        bind.succeed("systemctl restart named.service")
+        run_checks()
+    '';
 }

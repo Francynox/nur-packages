@@ -185,19 +185,41 @@ pkgs.testers.runNixOSTest {
   testScript =
     { ... }:
     ''
+      def run_checks():
+        router.wait_for_unit("kea-dhcp4.service")
+        router.wait_for_unit("kea-dhcp-ddns.service")
+
+        client.systemctl("start systemd-networkd-wait-online.service")
+        client.wait_for_unit("systemd-networkd-wait-online.service")
+
+        client.wait_until_succeeds("ping -c 5 10.0.0.1", timeout = 60)
+        router.wait_until_succeeds("ping -c 5 10.0.0.3", timeout = 60)
+
+        nameserver.wait_until_succeeds("dig +short client.lan.nixos.test @10.0.0.2 | grep -q 10.0.0.3", timeout = 60)
+
+      def security_score(service):
+        security_score = router.succeed(f'systemd-analyze security {service}.service --no-pager')
+        router.log(f"Security Analysis:\n{security_score}")
+        if "UNSAFE" in security_score:
+          raise Exception(f'{service} service security level is UNSAFE!')
+
       start_all()
-      router.wait_for_unit("kea-dhcp4.service")
-      router.wait_for_unit("kea-dhcp-ddns.service")
 
-      client.systemctl("start systemd-networkd-wait-online.service")
-      client.wait_for_unit("systemd-networkd-wait-online.service")
+      with subtest("Run Basic Checks"):
+        run_checks()
 
-      client.wait_until_succeeds("ping -c 5 10.0.0.1", timeout = 60)
-      router.wait_until_succeeds("ping -c 5 10.0.0.3", timeout = 60)
+      with subtest("Verify hardening"):
+        security_score("kea-dhcp4")
+        security_score("kea-dhcp-ddns")
 
-      nameserver.wait_until_succeeds("dig +short client.lan.nixos.test @10.0.0.2 | grep -q 10.0.0.3", timeout = 60)
+      with subtest("Verify Service Restart"):
+        router.succeed("systemctl restart kea-dhcp4.service")
+        router.succeed("systemctl restart kea-dhcp-ddns.service")
+        run_checks()
 
-      router.log(router.execute("systemd-analyze security kea-dhcp4.service | grep 'exposure'")[1])
-      router.log(router.execute("systemd-analyze security kea-dhcp-ddns.service | grep 'exposure'")[1])
+      with subtest("Verify Service Reload"):
+        router.succeed("systemctl reload kea-dhcp4.service")
+        router.succeed("systemctl reload kea-dhcp-ddns.service")
+        run_checks()
     '';
 }
