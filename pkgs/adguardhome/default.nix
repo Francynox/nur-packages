@@ -2,7 +2,7 @@
   stdenv,
   lib,
   fetchurl,
-  autoPatchelfHook
+  autoPatchelfHook,
 }:
 stdenv.mkDerivation rec {
   pname = "adguardhome";
