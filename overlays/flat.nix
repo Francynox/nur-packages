@@ -1,16 +1,12 @@
 # This overlay adds all packages from this repository directly into your main `pkgs` set.
 # Using this overlay may cause package name conflicts.
-self: super:
+final: prev:
+
 let
-  isReserved = n: n == "lib" || n == "overlays" || n == "modules";
-  nameValuePair = n: v: {
-    name = n;
-    value = v;
-  };
-  nurAttrs = import ../default.nix { pkgs = super; };
+  nurAttrs = import ../default.nix { pkgs = final; };
+  
+  reserved = [ "lib" "overlays" "modules" "ciJobs" "checks" ];
+  
+  isReserved = n: builtins.elem n reserved;
 in
-builtins.listToAttrs (
-  map (n: nameValuePair n nurAttrs.${n}) (
-    builtins.filter (n: !isReserved n) (builtins.attrNames nurAttrs)
-  )
-)
+prev.lib.filterAttrs (n: v: !isReserved n) nurAttrs
