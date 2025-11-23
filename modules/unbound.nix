@@ -80,7 +80,7 @@ in
           Type = "notify";
           ExecStart = "${cfg.package}/bin/unbound -d -c ${configFile} ${escapeShellArgs cfg.extraArgs}";
           ExecReload = "${cfg.package}/bin/unbound-control -c ${configFile} reload";
-          ExecStop = "${cfg.package}/sbin/unbound-control stop";
+          ExecStop = "${cfg.package}/bin/unbound-control -c ${configFile} stop";
           AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
           CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
           User = "unbound";
