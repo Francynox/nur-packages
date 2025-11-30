@@ -3,32 +3,41 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
-    { self, nixpkgs }:
-    let
-      nurModules = import ./modules;
-      nurOverlays = import ./overlays;
+    inputs@{
+      flake-parts,
+      nixpkgs,
+      treefmt-nix,
+      ...
+    }:
+    flake-parts.lib.mkFlake { inherit inputs; } (
+      {
+        withSystem,
+        lib,
+        config,
+        ...
+      }:
+      {
+        systems = [
+          "x86_64-linux"
+          "aarch64-linux"
+        ];
 
-      systems = nixpkgs.lib.systems.flakeExposed;
-      forAllSystems = nixpkgs.lib.genAttrs systems;
+        imports = [
+          treefmt-nix.flakeModule
+          ./per-system.nix
+        ];
 
-      perSystem =
-        system:
-        (import ./per-system.nix) {
-          inherit nixpkgs system;
+        flake = {
+          nixosModules = import ./modules;
+          overlays = import ./overlays;
+          ciJobs = lib.genAttrs config.systems (system: (withSystem system ({ config, ... }: config.ciJobs)));
         };
-
-    in
-    {
-      formatter = forAllSystems (system: (perSystem system).formatter);
-      legacyPackages = forAllSystems (system: (perSystem system).legacyPackages);
-      packages = forAllSystems (system: (perSystem system).packages);
-      checks = forAllSystems (system: (perSystem system).checks);
-      ciJobs = forAllSystems (system: (perSystem system).ciJobs);
-
-      nixosModules = nurModules;
-      overlays = nurOverlays;
-    };
+      }
+    );
 }
