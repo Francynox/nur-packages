@@ -70,11 +70,14 @@ Use this repository in `flake.nix`:
   nix build ".#checks.x86_64-linux.some-pakcage"
   nix build ".#checks.x86_64-linux.some-pakcage" --option sandbox false -L # for internet connection
   ```
-
 5. check derivations
   ```sh
   nix-store -q --references result # check store dependences for build
   nix path-info -Svh .#some-pakcage # check derivation size
+  ```
+6. get output list
+  ```sh
+  nix eval .#output.x86_64-linux --apply builtins.attrNames
   ```
 
 ## LICENSE

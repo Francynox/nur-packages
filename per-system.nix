@@ -1,66 +1,46 @@
 { nixpkgs, system }:
 
 let
-  pkgs = import nixpkgs { inherit system; };
+  inherit (nixpkgs) lib;
+
+  pkgs = import nixpkgs {
+    inherit system;
+    overlays = [ nur.overlays.namespace ];
+    config.allowUnfree = true;
+  };
 
   nur = import ./default.nix { inherit pkgs; };
 
-  pkgsForTests = import nixpkgs {
-    inherit system;
-    overlays = [ nur.overlays.namespace ];
-  };
-
   tests = import ./tests {
-    pkgs = pkgsForTests;
-    modules = nixpkgs.lib.attrValues nur.modules;
+    inherit pkgs;
+    modules = lib.attrValues nur.modules;
   };
 
   isSupported =
-    package:
+    p:
+    lib.isDerivation p && lib.meta.availableOn pkgs.stdenv.hostPlatform p && !(p.meta.broken or false);
+
+  isFree = p: lib.all (l: l.free or true) (lib.toList (p.meta.license or [ ]));
+
+  isBuildable = p: isSupported p && !(p.preferLocalBuild or false);
+
+  isCacheable = p: isBuildable p && isFree p;
+
+  mkCi =
+    condition:
     let
-      platforms = package.meta.platforms or null;
+      selectedPkgs = lib.filterAttrs (_: p: condition p) nur;
+
+      selectedTests = lib.filterAttrs (n: _: !(nur ? ${n}) || condition nur.${n}) tests;
+
+      prefixAttrs = prefix: set: lib.mapAttrs' (n: v: lib.nameValuePair "${prefix}-${n}" v) set;
     in
-    nixpkgs.lib.isDerivation package
-    && (
-      platforms == null
-      || builtins.any (p: nixpkgs.lib.meta.platformMatch pkgs.stdenv.hostPlatform p) platforms
-    )
-    && !(package.meta.broken or false);
-
-  isFree =
-    package:
-    let
-      licenseFromMeta = package.meta.license or [ ];
-      licenseList = if builtins.isList licenseFromMeta then licenseFromMeta else [ licenseFromMeta ];
-    in
-    builtins.all (license: license.free or true) licenseList;
-
-  isCheckable =
-    testName:
-    let
-      package = nur.${testName};
-    in
-    (builtins.hasAttr testName nur) && isSupported package;
-
-  isLocalBuild = package: package.preferLocalBuild or false;
-
-  isCachablePackage = package: isFree package && isSupported package && !isLocalBuild package;
-
-  isCachableCheck =
-    testName: if builtins.hasAttr testName nur then isCachablePackage nur.${testName} else true;
-
-  filteredPackages = nixpkgs.lib.filterAttrs (_: v: isCachablePackage v) nur;
-  filteredChecks = nixpkgs.lib.filterAttrs (n: _: isCachableCheck n) tests;
+    (prefixAttrs "pkg" selectedPkgs) // (prefixAttrs "check" selectedTests);
 in
 {
   formatter = pkgs.nixfmt-tree;
   legacyPackages = nur;
-  packages = nixpkgs.lib.filterAttrs (_: v: isSupported v) nur;
-  checks = nixpkgs.lib.filterAttrs (n: _: isCheckable n) tests;
-  ciJobs =
-    let
-      pkgsMap = nixpkgs.lib.mapAttrs' (n: v: nixpkgs.lib.nameValuePair "pkg-${n}" v) filteredPackages;
-      checksMap = nixpkgs.lib.mapAttrs' (n: v: nixpkgs.lib.nameValuePair "check-${n}" v) filteredChecks;
-    in
-    pkgsMap // checksMap;
+  packages = lib.filterAttrs (_: v: isSupported v) nur;
+  checks = mkCi isSupported;
+  ciJobs = mkCi isCacheable;
 }

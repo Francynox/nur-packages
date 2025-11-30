@@ -38,4 +38,4 @@ jobs:
 
       - name: Build & Check all packages
         run: |
-          nix run github:Mic92/nix-fast-build -- --skip-cached --no-nom --flake .#ciJobs --override-input nixpkgs ${{ matrix.nixpkgs }}
+          nix run github:Mic92/nix-fast-build -- --skip-cached --no-nom --flake .#checks --override-input nixpkgs ${{ matrix.nixpkgs }}
