@@ -4,9 +4,15 @@ final: prev:
 
 let
   nurAttrs = import ../default.nix { pkgs = final; };
-  
-  reserved = [ "lib" "overlays" "modules" "ciJobs" "checks" ];
-  
+
+  reserved = [
+    "lib"
+    "overlays"
+    "modules"
+    "ciJobs"
+    "checks"
+  ];
+
   isReserved = n: builtins.elem n reserved;
 in
 prev.lib.filterAttrs (n: v: !isReserved n) nurAttrs
