@@ -1,4 +1,5 @@
 name: Bump flake.lock
+
 on:
   schedule:
     - cron: 23 2 */2 * *
@@ -65,4 +66,9 @@ jobs:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
         run: |
-          gh pr merge --auto --merge "$PR_URL"
+          for i in {1..5}; do
+            gh pr merge --auto --merge "$PR_URL" && break || {
+              echo "Tentativo $i fallito, riprovo tra 5 secondi..."
+              sleep 5
+            }
+          done
