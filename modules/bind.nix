@@ -70,7 +70,7 @@ in
         ${concatStringsSep "\n" (
           mapAttrsToList (
             destName: srcPath:
-            ''cp -n ${srcPath} /var/lib/bind/${destName} && chmod 600 /var/lib/bind/${destName}''
+            "cp -n ${srcPath} /var/lib/bind/${destName} && chmod 600 /var/lib/bind/${destName}"
           ) cfg.zoneFiles
         )}
 
