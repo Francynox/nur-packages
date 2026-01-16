@@ -5,7 +5,7 @@ validate_version() {
   local source="$2"
   if [[ -z "$version" || "$version" == "null" ]]; then
     echo "Error: Unable to retrieve version from $source" >&2
-    return 1
+    exit 1
   fi
 }
 
