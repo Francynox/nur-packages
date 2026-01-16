@@ -18,6 +18,7 @@
   bind = pkgs.callPackage ./pkgs/bind { };
   adguardhome = pkgs.callPackage ./pkgs/adguardhome { };
   unbound = pkgs.callPackage ./pkgs/unbound { };
+  proxmox-vma = pkgs.callPackage ./pkgs/proxmox-vma { };
   # some-qt5-package = pkgs.libsForQt5.callPackage ./pkgs/some-qt5-package { };
   # ...
 }
