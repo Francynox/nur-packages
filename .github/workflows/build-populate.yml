@@ -41,3 +41,6 @@ jobs:
 
       - name: Build nix packages
         run: nix run github:Mic92/nix-fast-build -- --skip-cached --no-nom --flake .#ciJobs --override-input nixpkgs ${{ matrix.nixpkgs }}
+
+      - name: Wait for cache upload
+        run: sleep 10
