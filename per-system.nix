@@ -57,12 +57,27 @@
           programs.nixfmt.enable = true;
         };
 
+        pre-commit = {
+          check.enable = true;
+          settings.hooks.treefmt.enable = true;
+          settings.hooks.nix-flake-check = {
+            enable = true;
+            name = "nix-flake-check";
+            entry = "bash -c 'if command -v nix >/dev/null; then nix flake check; else echo \"Skipping nix flake check in sandbox\"; fi'";
+            language = "system";
+            pass_filenames = false;
+          };
+        };
+
         legacyPackages = nur;
         packages = lib.filterAttrs (_: v: isSupported v) nur;
         checks = mkCi isSupported;
         ciJobs = mkCi isCacheable;
 
         devShells.default = pkgs.mkShell {
+          shellHook = ''
+            ${config.pre-commit.installationScript}
+          '';
           packages = [
             config.treefmt.build.wrapper
             pkgs.nix-update
