@@ -67,7 +67,7 @@ jobs:
           PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
         run: |
           for i in {1..5}; do
-            gh pr merge --auto --merge "$PR_URL" && break || {
+            gh pr merge --auto --squash "$PR_URL" && break || {
               echo "Attempt $i failed, retrying in 5 seconds..."
               sleep 5
             }
