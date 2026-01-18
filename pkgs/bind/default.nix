@@ -76,10 +76,10 @@ stdenv.mkDerivation rec {
 
   passthru.updateScript = ./update.sh;
 
-  meta = with lib; {
+  meta = {
     homepage = "https://www.isc.org/bind/";
     description = "ISC BIND - Domain Name Server";
-    license = licenses.mpl20;
+    license = lib.licenses.mpl20;
     platforms = [ "x86_64-linux" ];
     mainProgram = "named";
   };

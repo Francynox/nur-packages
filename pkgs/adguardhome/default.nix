@@ -30,10 +30,10 @@ stdenv.mkDerivation rec {
 
   passthru.updateScript = ./update.sh;
 
-  meta = with lib; {
+  meta = {
     homepage = "https://github.com/AdguardTeam/AdGuardHome";
     description = "Network-wide ads & trackers blocking DNS server";
-    license = licenses.gpl3Only;
+    license = lib.licenses.gpl3Only;
     platforms = [ "x86_64-linux" ];
     mainProgram = "adguardhome";
   };

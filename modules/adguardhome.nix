@@ -4,42 +4,41 @@
   pkgs,
   ...
 }:
-with lib;
 let
   cfg = config.services.francynox.adguardhome;
 in
 {
   options.services.francynox.adguardhome = {
-    enable = mkEnableOption "AdGuard Home DNS ad-blocker (francynox NUR version)";
+    enable = lib.mkEnableOption "AdGuard Home DNS ad-blocker (francynox NUR version)";
 
-    package = mkOption {
-      type = types.package;
+    package = lib.mkOption {
+      type = lib.types.package;
       default = pkgs.francynox.adguardhome;
-      defaultText = literalExpression "pkgs.francynox.adguardhome";
+      defaultText = lib.literalExpression "pkgs.francynox.adguardhome";
       description = "The AdGuard Home package (from francynox NUR) to use.";
     };
 
-    configFile = mkOption {
-      type = types.nullOr types.path;
+    configFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = "Path to the main AdGuard Home configuration file (AdGuardHome.yaml).";
-      example = literalExpression "/path/to/your/AdGuardHome.yaml";
+      example = lib.literalExpression "/path/to/your/AdGuardHome.yaml";
     };
 
-    extraArgs = mkOption {
-      type = types.listOf types.str;
+    extraArgs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "List of additional command-line arguments to pass to the AdGuard Home daemon.";
     };
 
-    extraRestartTriggers = mkOption {
-      type = types.listOf types.path;
+    extraRestartTriggers = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
       default = [ ];
       description = "A list of extra derivations to trigger a service restart when changed.";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = cfg.configFile != null;
@@ -74,7 +73,7 @@ in
         '';
         restartTriggers = cfg.extraRestartTriggers;
         serviceConfig = {
-          ExecStart = "${cfg.package}/bin/adguardhome -c ${configFile} --work-dir ${workDir} --pidfile ${pidFile} --no-check-update -s run ${escapeShellArgs cfg.extraArgs}";
+          ExecStart = "${cfg.package}/bin/adguardhome -c ${configFile} --work-dir ${workDir} --pidfile ${pidFile} --no-check-update -s run ${lib.escapeShellArgs cfg.extraArgs}";
           WorkingDirectory = workDir;
           AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
           CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];

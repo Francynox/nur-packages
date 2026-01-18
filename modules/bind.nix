@@ -4,30 +4,29 @@
   pkgs,
   ...
 }:
-with lib;
 let
   cfg = config.services.francynox.bind;
 in
 {
   options.services.francynox.bind = {
-    enable = mkEnableOption "BIND DNS server (francynox NUR version)";
+    enable = lib.mkEnableOption "BIND DNS server (francynox NUR version)";
 
-    package = mkOption {
-      type = types.package;
+    package = lib.mkOption {
+      type = lib.types.package;
       default = pkgs.francynox.bind;
-      defaultText = literalExpression "pkgs.francynox.bind";
+      defaultText = lib.literalExpression "pkgs.francynox.bind";
       description = "The BIND package (from francynox NUR) to use.";
     };
 
-    configFile = mkOption {
-      type = types.nullOr types.path;
+    configFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = "Path to the main BIND configuration file (named.conf).";
-      example = literalExpression "/path/to/your/named.conf";
+      example = lib.literalExpression "/path/to/your/named.conf";
     };
 
-    zoneFiles = mkOption {
-      type = types.attrsOf types.path;
+    zoneFiles = lib.mkOption {
+      type = lib.types.attrsOf lib.types.path;
       default = { };
       description = ''
         An attribute set of zone files to be copied into the zones directory. (/var/lib/bind)
@@ -35,20 +34,20 @@ in
       '';
     };
 
-    extraArgs = mkOption {
-      type = types.listOf types.str;
+    extraArgs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "List of additional command-line arguments to pass to the named daemon.";
     };
 
-    extraRestartTriggers = mkOption {
-      type = types.listOf types.path;
+    extraRestartTriggers = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
       default = [ ];
       description = "A list of extra derivations to trigger a service restart when changed.";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = cfg.configFile != null;
@@ -67,8 +66,8 @@ in
       wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
       preStart = ''
-        ${concatStringsSep "\n" (
-          mapAttrsToList (
+        ${lib.concatStringsSep "\n" (
+          lib.mapAttrsToList (
             destName: srcPath:
             "cp -n ${srcPath} /var/lib/bind/${destName} && chmod 600 /var/lib/bind/${destName}"
           ) cfg.zoneFiles
@@ -82,7 +81,7 @@ in
       restartTriggers = cfg.extraRestartTriggers;
       serviceConfig = {
         Type = "notify";
-        ExecStart = "${cfg.package}/bin/named -f -c ${cfg.configFile} ${escapeShellArgs cfg.extraArgs}";
+        ExecStart = "${cfg.package}/bin/named -f -c ${cfg.configFile} ${lib.escapeShellArgs cfg.extraArgs}";
         ExecReload = "${cfg.package}/bin/rndc reload";
         ExecStop = "${cfg.package}/bin/rndc stop";
         AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];

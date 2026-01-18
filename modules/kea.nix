@@ -4,7 +4,6 @@
   pkgs,
   ...
 }:
-with lib;
 let
   cfg = config.services.francynox.kea;
 
@@ -48,27 +47,27 @@ let
 
   mkKeaComponent =
     name: description:
-    mkOption {
+    lib.mkOption {
       description = description;
       default = { };
-      type = types.submodule {
+      type = lib.types.submodule {
         options = {
-          enable = mkEnableOption "Kea ${name}";
+          enable = lib.mkEnableOption "Kea ${name}";
 
-          configFile = mkOption {
-            type = types.nullOr types.path;
+          configFile = lib.mkOption {
+            type = lib.types.nullOr lib.types.path;
             default = null;
             description = "Path to the Kea ${name} configuration file.";
           };
 
-          extraArgs = mkOption {
-            type = types.listOf types.str;
+          extraArgs = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
             default = [ ];
             description = "Additional command-line arguments.";
           };
 
-          extraRestartTriggers = mkOption {
-            type = types.listOf types.path;
+          extraRestartTriggers = lib.mkOption {
+            type = lib.types.listOf lib.types.path;
             default = [ ];
             description = "Extra derivations to trigger a service restart.";
           };
@@ -83,7 +82,7 @@ let
       componentCfg,
       capabilities ? [ ],
     }:
-    mkIf componentCfg.enable {
+    lib.mkIf componentCfg.enable {
       assertions = [
         {
           assertion = componentCfg.configFile != null;
@@ -108,7 +107,7 @@ let
         restartTriggers = componentCfg.extraRestartTriggers ++ [ componentCfg.configFile ];
 
         serviceConfig = commonServiceConfig // {
-          ExecStart = "${cfg.package}/bin/${binaryName} -c ${componentCfg.configFile} ${escapeShellArgs componentCfg.extraArgs}";
+          ExecStart = "${cfg.package}/bin/${binaryName} -c ${componentCfg.configFile} ${lib.escapeShellArgs componentCfg.extraArgs}";
           AmbientCapabilities = capabilities;
           CapabilityBoundingSet = capabilities;
         };
@@ -118,10 +117,10 @@ let
 in
 {
   options.services.francynox.kea = {
-    package = mkOption {
-      type = types.package;
+    package = lib.mkOption {
+      type = lib.types.package;
       default = pkgs.francynox.kea;
-      defaultText = literalExpression "pkgs.francynox.kea";
+      defaultText = lib.literalExpression "pkgs.francynox.kea";
       description = "The Kea package (from francynox NUR) to use for all Kea services.";
     };
 
@@ -135,52 +134,54 @@ in
   };
 
   config =
-    mkIf
-      (any (c: c.enable) [
+    lib.mkIf
+      (lib.any (c: c.enable) [
         cfg.ctrl-agent
         cfg.dhcp4
         cfg.dhcp6
         cfg.dhcp-ddns
       ])
-      (mkMerge [
-        {
-          environment.systemPackages = [ cfg.package ];
+      (
+        lib.mkMerge [
+          {
+            environment.systemPackages = [ cfg.package ];
 
-          users.users.kea = {
-            isSystemUser = true;
-            group = "kea";
-          };
-          users.groups.kea = { };
-        }
+            users.users.kea = {
+              isSystemUser = true;
+              group = "kea";
+            };
+            users.groups.kea = { };
+          }
 
-        (mkKeaService {
-          componentName = "ctrl-agent";
-          binaryName = "kea-ctrl-agent";
-          componentCfg = cfg.ctrl-agent;
-        })
+          (mkKeaService {
+            componentName = "ctrl-agent";
+            binaryName = "kea-ctrl-agent";
+            componentCfg = cfg.ctrl-agent;
+          })
 
-        (mkKeaService {
-          componentName = "dhcp4";
-          binaryName = "kea-dhcp4";
-          componentCfg = cfg.dhcp4;
-          capabilities = [
-            "CAP_NET_BIND_SERVICE"
-            "CAP_NET_RAW"
-          ];
-        })
+          (mkKeaService {
+            componentName = "dhcp4";
+            binaryName = "kea-dhcp4";
+            componentCfg = cfg.dhcp4;
+            capabilities = [
+              "CAP_NET_BIND_SERVICE"
+              "CAP_NET_RAW"
+            ];
+          })
 
-        (mkKeaService {
-          componentName = "dhcp6";
-          binaryName = "kea-dhcp6";
-          componentCfg = cfg.dhcp6;
-          capabilities = [ "CAP_NET_BIND_SERVICE" ];
-        })
+          (mkKeaService {
+            componentName = "dhcp6";
+            binaryName = "kea-dhcp6";
+            componentCfg = cfg.dhcp6;
+            capabilities = [ "CAP_NET_BIND_SERVICE" ];
+          })
 
-        (mkKeaService {
-          componentName = "dhcp-ddns";
-          binaryName = "kea-dhcp-ddns";
-          componentCfg = cfg.dhcp-ddns;
-          capabilities = [ "CAP_NET_BIND_SERVICE" ];
-        })
-      ]);
+          (mkKeaService {
+            componentName = "dhcp-ddns";
+            binaryName = "kea-dhcp-ddns";
+            componentCfg = cfg.dhcp-ddns;
+            capabilities = [ "CAP_NET_BIND_SERVICE" ];
+          })
+        ]
+      );
 }

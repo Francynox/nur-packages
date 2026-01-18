@@ -65,10 +65,10 @@ stdenv.mkDerivation rec {
 
   passthru.updateScript = ./update.sh;
 
-  meta = with lib; {
+  meta = {
     homepage = "https://kea.isc.org/";
     description = "ISC KEA - DHCP server";
-    license = licenses.mpl20;
+    license = lib.licenses.mpl20;
     platforms = [ "x86_64-linux" ];
   };
 }

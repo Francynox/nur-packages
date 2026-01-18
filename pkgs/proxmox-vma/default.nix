@@ -76,10 +76,10 @@ minimalQemu.overrideAttrs (super: rec {
     inherit proxmoxPatchSrc;
   };
 
-  meta = with lib; {
+  meta = {
     description = "Proxmox VMA (Virtual Machine Archive) tool patched into QEMU";
     homepage = "https://git.proxmox.com/?p=pve-qemu.git";
-    license = licenses.gpl2Plus;
+    license = lib.licenses.gpl2Plus;
     platforms = [ "x86_64-linux" ];
   };
 })

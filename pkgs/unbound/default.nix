@@ -84,10 +84,10 @@ stdenv.mkDerivation rec {
 
   passthru.updateScript = ./update.sh;
 
-  meta = with lib; {
+  meta = {
     homepage = "https://nlnetlabs.nl/projects/unbound/about/";
     description = "UNBOUND - validating, recursive, caching DNS resolver";
-    license = licenses.bsd3;
+    license = lib.licenses.bsd3;
     platforms = [ "x86_64-linux" ];
     mainProgram = "unbound";
   };

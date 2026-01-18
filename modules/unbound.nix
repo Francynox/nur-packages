@@ -4,42 +4,41 @@
   pkgs,
   ...
 }:
-with lib;
 let
   cfg = config.services.francynox.unbound;
 in
 {
   options.services.francynox.unbound = {
-    enable = mkEnableOption "Unbound DNS recursor (francynox NUR version)";
+    enable = lib.mkEnableOption "Unbound DNS recursor (francynox NUR version)";
 
-    package = mkOption {
-      type = types.package;
+    package = lib.mkOption {
+      type = lib.types.package;
       default = pkgs.francynox.unbound;
-      defaultText = literalExpression "pkgs.francynox.unbound";
+      defaultText = lib.literalExpression "pkgs.francynox.unbound";
       description = "The Unbound package (from francynox NUR) to use.";
     };
 
-    configFile = mkOption {
-      type = types.nullOr types.path;
+    configFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
       default = null;
       description = "Path to the main Unbound configuration file (unbound.conf).";
-      example = literalExpression "/path/to/your/unbound.conf";
+      example = lib.literalExpression "/path/to/your/unbound.conf";
     };
 
-    extraArgs = mkOption {
-      type = types.listOf types.str;
+    extraArgs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "List of additional command-line arguments to pass to the named daemon.";
     };
 
-    extraRestartTriggers = mkOption {
-      type = types.listOf types.path;
+    extraRestartTriggers = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
       default = [ ];
       description = "A list of extra derivations to trigger a service restart when changed.";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = cfg.configFile != null;
@@ -78,7 +77,7 @@ in
         restartTriggers = cfg.extraRestartTriggers;
         serviceConfig = {
           Type = "notify";
-          ExecStart = "${cfg.package}/bin/unbound -d -c ${configFile} ${escapeShellArgs cfg.extraArgs}";
+          ExecStart = "${cfg.package}/bin/unbound -d -c ${configFile} ${lib.escapeShellArgs cfg.extraArgs}";
           ExecReload = "${cfg.package}/bin/unbound-control -c ${configFile} reload";
           ExecStop = "${cfg.package}/bin/unbound-control -c ${configFile} stop";
           AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
