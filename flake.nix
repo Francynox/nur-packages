@@ -20,7 +20,6 @@
   outputs =
     inputs@{
       flake-parts,
-      nixpkgs,
       treefmt-nix,
       git-hooks,
       ...

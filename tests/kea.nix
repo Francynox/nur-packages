@@ -169,57 +169,53 @@ pkgs.testers.runNixOSTest {
           };
       };
 
-    client =
-      { pkgs, ... }:
-      {
-        virtualisation.vlans = [ 1 ];
-        systemd.services.systemd-networkd.environment.SYSTEMD_LOG_LEVEL = "debug";
-        networking = {
-          useNetworkd = true;
-          useDHCP = false;
-          firewall.enable = false;
-          interfaces.eth1.useDHCP = true;
-        };
+    client = _: {
+      virtualisation.vlans = [ 1 ];
+      systemd.services.systemd-networkd.environment.SYSTEMD_LOG_LEVEL = "debug";
+      networking = {
+        useNetworkd = true;
+        useDHCP = false;
+        firewall.enable = false;
+        interfaces.eth1.useDHCP = true;
       };
+    };
   };
-  testScript =
-    { ... }:
-    ''
-      def run_checks():
-        router.wait_for_unit("kea-dhcp4.service")
-        router.wait_for_unit("kea-dhcp-ddns.service")
+  testScript = _: ''
+    def run_checks():
+      router.wait_for_unit("kea-dhcp4.service")
+      router.wait_for_unit("kea-dhcp-ddns.service")
 
-        client.systemctl("start systemd-networkd-wait-online.service")
-        client.wait_for_unit("systemd-networkd-wait-online.service")
+      client.systemctl("start systemd-networkd-wait-online.service")
+      client.wait_for_unit("systemd-networkd-wait-online.service")
 
-        client.wait_until_succeeds("ping -c 5 10.0.0.1", timeout = 60)
-        router.wait_until_succeeds("ping -c 5 10.0.0.3", timeout = 60)
+      client.wait_until_succeeds("ping -c 5 10.0.0.1", timeout = 60)
+      router.wait_until_succeeds("ping -c 5 10.0.0.3", timeout = 60)
 
-        nameserver.wait_until_succeeds("dig +short client.lan.nixos.test @10.0.0.2 | grep -q 10.0.0.3", timeout = 60)
+      nameserver.wait_until_succeeds("dig +short client.lan.nixos.test @10.0.0.2 | grep -q 10.0.0.3", timeout = 60)
 
-      def security_score(service):
-        security_score = router.succeed(f'systemd-analyze security {service}.service --no-pager')
-        router.log(f"Security Analysis:\n{security_score}")
-        if "UNSAFE" in security_score:
-          raise Exception(f'{service} service security level is UNSAFE!')
+    def security_score(service):
+      security_score = router.succeed(f'systemd-analyze security {service}.service --no-pager')
+      router.log(f"Security Analysis:\n{security_score}")
+      if "UNSAFE" in security_score:
+        raise Exception(f'{service} service security level is UNSAFE!')
 
-      start_all()
+    start_all()
 
-      with subtest("Run Basic Checks"):
-        run_checks()
+    with subtest("Run Basic Checks"):
+      run_checks()
 
-      with subtest("Verify hardening"):
-        security_score("kea-dhcp4")
-        security_score("kea-dhcp-ddns")
+    with subtest("Verify hardening"):
+      security_score("kea-dhcp4")
+      security_score("kea-dhcp-ddns")
 
-      with subtest("Verify Service Restart"):
-        router.succeed("systemctl restart kea-dhcp4.service")
-        router.succeed("systemctl restart kea-dhcp-ddns.service")
-        run_checks()
+    with subtest("Verify Service Restart"):
+      router.succeed("systemctl restart kea-dhcp4.service")
+      router.succeed("systemctl restart kea-dhcp-ddns.service")
+      run_checks()
 
-      with subtest("Verify Service Reload"):
-        router.succeed("systemctl reload kea-dhcp4.service")
-        router.succeed("systemctl reload kea-dhcp-ddns.service")
-        run_checks()
-    '';
+    with subtest("Verify Service Reload"):
+      router.succeed("systemctl reload kea-dhcp4.service")
+      router.succeed("systemctl reload kea-dhcp-ddns.service")
+      run_checks()
+  '';
 }

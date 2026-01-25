@@ -29,7 +29,7 @@
       mkCi =
         condition:
         let
-          selectedPkgs = lib.filterAttrs (_: p: condition p) nur;
+          selectedPkgs = lib.filterAttrs (_: condition) nur;
 
           selectedTests = lib.filterAttrs (n: _: !(nur ? ${n}) || condition nur.${n}) tests;
 
@@ -55,6 +55,12 @@
         treefmt = {
           projectRootFile = "flake.nix";
           programs.nixfmt.enable = true;
+          programs.deadnix.enable = true;
+          programs.statix.enable = true;
+          programs.ruff = {
+            check = true;
+            format = true;
+          };
         };
 
         pre-commit = {
@@ -70,7 +76,7 @@
         };
 
         legacyPackages = nur;
-        packages = lib.filterAttrs (_: v: isSupported v) nur;
+        packages = lib.filterAttrs (_: isSupported) nur;
         checks = mkCi isSupported;
         ciJobs = mkCi isCacheable;
 
@@ -81,6 +87,9 @@
           packages = [
             config.treefmt.build.wrapper
             pkgs.nix-update
+            pkgs.deadnix
+            pkgs.statix
+            pkgs.ruff
           ];
         };
       };

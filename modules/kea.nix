@@ -48,7 +48,7 @@ let
   mkKeaComponent =
     name: description:
     lib.mkOption {
-      description = description;
+      inherit description;
       default = { };
       type = lib.types.submodule {
         options = {

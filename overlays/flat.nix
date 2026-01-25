@@ -15,4 +15,4 @@ let
 
   isReserved = n: builtins.elem n reserved;
 in
-prev.lib.filterAttrs (n: v: !isReserved n) nurAttrs
+prev.lib.filterAttrs (n: _v: !isReserved n) nurAttrs
