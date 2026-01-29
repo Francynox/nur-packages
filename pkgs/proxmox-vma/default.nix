@@ -12,12 +12,12 @@
 let
   proxmoxPatchSrc = fetchFromGitHub rec {
     pname = "pve-qemu-src";
-    version = "de7f8fe356c7b1d346c3c15c971f7a0dcd11e70e";
+    version = "912a254903483ff93311c060f3e657fdf48c4a23";
 
     owner = "proxmox";
     repo = "pve-qemu";
     rev = version;
-    hash = "sha256-zqlO0btKA861zkYHfreMMMPL7rZN8wcldWMpNaeOsMg=";
+    hash = "sha256-F8R6wq7p48hOkkuQJq/lmMTjMP+Vk8t8O83hfmGFjB0=";
   };
 
   # Disable unneeded features to reduce build time
