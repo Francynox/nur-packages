@@ -7,4 +7,5 @@
   adguardhome = import ./adguardhome.nix;
   unbound = import ./unbound.nix;
   growpart = import ./growpart.nix;
+  mutable-configs = import ./mutable-configs.nix;
 }
