@@ -6,4 +6,5 @@
   bind = import ./bind.nix;
   adguardhome = import ./adguardhome.nix;
   unbound = import ./unbound.nix;
+  growpart = import ./growpart.nix;
 }
