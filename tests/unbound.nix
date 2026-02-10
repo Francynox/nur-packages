@@ -28,7 +28,7 @@ pkgs.testers.runNixOSTest {
         };
     };
 
-  testScript = _: ''
+  testScript = ''
     def run_checks():
       unbound.wait_for_unit("unbound.service")
       unbound.wait_for_open_port(53)

@@ -56,7 +56,7 @@ pkgs.testers.runNixOSTest {
         };
     };
 
-  testScript = _: ''
+  testScript = ''
     def run_checks():
       bind.wait_for_unit("named.service")
       bind.wait_for_open_port(53)

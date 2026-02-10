@@ -35,7 +35,7 @@ pkgs.testers.runNixOSTest {
           };
       };
   };
-  testScript = _: ''
+  testScript = ''
     def run_checks():
       adguardhome.wait_for_unit("adguardhome.service")
       adguardhome.wait_for_open_port(80, timeout = 15)

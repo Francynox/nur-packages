@@ -169,7 +169,7 @@ pkgs.testers.runNixOSTest {
           };
       };
 
-    client = _: {
+    client = {
       virtualisation.vlans = [ 1 ];
       systemd.services.systemd-networkd.environment.SYSTEMD_LOG_LEVEL = "debug";
       networking = {
@@ -180,7 +180,7 @@ pkgs.testers.runNixOSTest {
       };
     };
   };
-  testScript = _: ''
+  testScript = ''
     def run_checks():
       router.wait_for_unit("kea-dhcp4.service")
       router.wait_for_unit("kea-dhcp-ddns.service")
