@@ -22,11 +22,11 @@
 }:
 stdenv.mkDerivation rec {
   pname = "bind";
-  version = "9.21.18";
+  version = "9.21.19";
 
   src = fetchurl {
     url = "https://downloads.isc.org/isc/${pname}9/${version}/${pname}-${version}.tar.xz";
-    hash = "sha256-sqXwHtf+3LhLnfSueCCO1Rzu0XM/N/uepkkCbsg9n1k=";
+    hash = "sha256-3MlMX1uvEhT+4RxXi/N+3zFOd2HTv/XtX0tDnVbdVtw=";
   };
 
   patches = [
