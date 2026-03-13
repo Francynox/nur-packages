@@ -6,11 +6,11 @@
 }:
 stdenv.mkDerivation rec {
   pname = "adguardhome";
-  version = "0.108.0-b.82";
+  version = "0.108.0-b.83";
 
   src = fetchurl {
     url = "https://github.com/AdguardTeam/AdGuardHome/releases/download/v${version}/AdGuardHome_linux_amd64.tar.gz";
-    hash = "sha256-ivsHaj/e6pytR8ej/tKRqsgz7PiFgOoOdUqKeMDXKVc=";
+    hash = "sha256-FWhOzbkrRZCjnlgIVlknY/YRGxWsFrcIGhBy+qR7Xos=";
   };
 
   nativeBuildInputs = [
