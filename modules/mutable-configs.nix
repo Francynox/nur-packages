@@ -9,6 +9,7 @@ with lib;
 
 let
   cfg = config.services.francynox.mutable-configs;
+  telegramNotifyScript = config.services.francynox.telegram-notify.package;
 
   mutableConfigFileOptions = {
     options = {
@@ -38,7 +39,7 @@ let
 
       notifyOnUpgrade = mkOption {
         type = types.bool;
-        default = false;
+        default = true;
         description = "Whether to send a notification if the configuration has changed during an upgrade.";
       };
 
@@ -91,9 +92,16 @@ in
 
     # Checks if local files have drifted from the pristine state.
     systemd.services.nixos-upgrade = {
+      path = lib.mkAfter [
+        pkgs.diffutils
+        pkgs.inetutils
+        pkgs.coreutils
+        pkgs.hostname
+      ];
       preStart = ''
         echo "Checking mutable configs for local modifications..."
         EXIT_ON_CHANGE=0
+        CURRENT_HOST=$(hostname)
 
         ${concatStringsSep "\n" (
           mapAttrsToList (name: conf: ''
@@ -105,12 +113,14 @@ in
             CHECK_FILE="${if conf.pathToCheck != null then conf.pathToCheck else "$TARGET_FILE"}"
 
             if [ -f "$CHECK_FILE" ] && [ -f "$PRISTINE_FILE" ]; then
-              if ! ${pkgs.diffutils}/bin/cmp -s "$CHECK_FILE" "$PRISTINE_FILE"; then
+              if ! cmp -s "$CHECK_FILE" "$PRISTINE_FILE"; then
                 echo "  [!] Configuration drift detected: $CHECK_FILE differs from pristine."
                 
                 ${optionalString conf.notifyOnUpgrade ''
-                  # Send notification (wall to all users)
-                  echo "Configuration drift detected for $CHECK_FILE during upgrade." | wall -n
+                  # Send Telegram notification if the command is available
+                  if [ -x ${telegramNotifyScript}/bin/telegram-notify ]; then
+                    ${telegramNotifyScript}/bin/telegram-notify "*Configuration Drift Detected*%0A%0A*Host:* $CURRENT_HOST%0A*File:* \`$CHECK_FILE\` differs from pristine."
+                  fi
                 ''}
 
                 ${optionalString conf.stopAutoUpgrade ''
