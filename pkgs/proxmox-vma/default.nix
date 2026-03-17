@@ -40,11 +40,11 @@ let
 in
 minimalQemu.overrideAttrs (super: rec {
   pname = "proxmox-vma";
-  version = "10.2.0";
+  version = "10.2.1";
 
   src = fetchurl {
     url = "https://download.qemu.org/qemu-${version}.tar.xz";
-    hash = "sha256-njCtG4ufe0RjABWC0aspfznPzOpdCFQMDKbWZyeFiDo=";
+    hash = "sha256-o3F0d9jiyE1jC//7wg9s0yk+tFqh5trG0MwnaJmRyeE=";
   };
 
   outputs = [ "out" ];
