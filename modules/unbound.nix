@@ -18,6 +18,30 @@ in
       description = "The Unbound package (from francynox NUR) to use.";
     };
 
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = "unbound";
+      description = "User account under which Unbound runs.";
+    };
+
+    group = lib.mkOption {
+      type = lib.types.str;
+      default = "unbound";
+      description = "Group under which Unbound runs.";
+    };
+
+    dataDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/var/lib/unbound";
+      description = "The working directory and data directory for Unbound.";
+    };
+
+    configDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/etc/unbound";
+      description = "The configuration directory for Unbound.";
+    };
+
     configFile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
@@ -46,11 +70,11 @@ in
       }
     ];
     environment.systemPackages = [ cfg.package ];
-    users.users.unbound = {
+    users.users.${cfg.user} = {
       isSystemUser = true;
-      group = "unbound";
+      inherit (cfg) group;
     };
-    users.groups.unbound = { };
+    users.groups.${cfg.group} = { };
     systemd.services.unbound =
       let
         configFile = pkgs.writeText "unbound.conf" ''
@@ -82,12 +106,16 @@ in
           ExecStop = "${cfg.package}/bin/unbound-control -c ${configFile} stop";
           AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
           CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-          User = "unbound";
-          Group = "unbound";
-          ConfigurationDirectory = "unbound";
+          User = cfg.user;
+          Group = cfg.group;
+          ConfigurationDirectory = lib.mkIf (lib.hasPrefix "/etc/" cfg.configDir) (
+            lib.removePrefix "/etc/" cfg.configDir
+          );
           RuntimeDirectory = "unbound";
           RuntimeDirectoryPreserve = true;
-          StateDirectory = "unbound";
+          StateDirectory = lib.mkIf (lib.hasPrefix "/var/lib/" cfg.dataDir) (
+            lib.removePrefix "/var/lib/" cfg.dataDir
+          );
           StateDirectoryMode = "0700";
           CacheDirectory = "unbound";
           Restart = "on-failure";

@@ -25,6 +25,30 @@ in
       example = lib.literalExpression "/path/to/your/named.conf";
     };
 
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = "bind";
+      description = "User account under which BIND runs.";
+    };
+
+    group = lib.mkOption {
+      type = lib.types.str;
+      default = "bind";
+      description = "Group under which BIND runs.";
+    };
+
+    dataDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/var/lib/bind";
+      description = "The working directory and data directory for BIND.";
+    };
+
+    configDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/etc/bind";
+      description = "The configuration directory for BIND.";
+    };
+
     zoneFiles = lib.mkOption {
       type = lib.types.attrsOf lib.types.path;
       default = { };
@@ -55,11 +79,11 @@ in
       }
     ];
     environment.systemPackages = [ cfg.package ];
-    users.users.bind = {
+    users.users.${cfg.user} = {
       isSystemUser = true;
-      group = "bind";
+      inherit (cfg) group;
     };
-    users.groups.bind = { };
+    users.groups.${cfg.group} = { };
     systemd.services.named = {
       description = "BIND Domain Name Server (francynox)";
       after = [ "network-online.target" ];
@@ -69,12 +93,12 @@ in
         ${lib.concatStringsSep "\n" (
           lib.mapAttrsToList (
             destName: srcPath:
-            "cp -n ${srcPath} /var/lib/bind/${destName} && chmod 600 /var/lib/bind/${destName}"
+            "cp -n ${srcPath} ${cfg.dataDir}/${destName} && chmod 600 ${cfg.dataDir}/${destName}"
           ) cfg.zoneFiles
         )}
 
-        if [ ! -r /etc/bind/rndc.key ]; then
-          echo "/etc/bind/rndc.key file not found or not readable by user 'bind'. Cannot start bind service.";
+        if [ ! -r ${cfg.configDir}/rndc.key ]; then
+          echo "${cfg.configDir}/rndc.key file not found or not readable by user '${cfg.user}'. Cannot start bind service.";
           exit 1;
         fi
       '';
@@ -86,12 +110,16 @@ in
         ExecStop = "${cfg.package}/bin/rndc stop";
         AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
         CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-        User = "bind";
-        Group = "bind";
-        ConfigurationDirectory = "bind";
+        User = cfg.user;
+        Group = cfg.group;
+        ConfigurationDirectory = lib.mkIf (lib.hasPrefix "/etc/" cfg.configDir) (
+          lib.removePrefix "/etc/" cfg.configDir
+        );
         RuntimeDirectory = "named";
         RuntimeDirectoryPreserve = true;
-        StateDirectory = "bind";
+        StateDirectory = lib.mkIf (lib.hasPrefix "/var/lib/" cfg.dataDir) (
+          lib.removePrefix "/var/lib/" cfg.dataDir
+        );
         StateDirectoryMode = "0700";
         CacheDirectory = "bind";
         Restart = "on-failure";

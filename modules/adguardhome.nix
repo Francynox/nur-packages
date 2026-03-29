@@ -25,6 +25,24 @@ in
       example = lib.literalExpression "/path/to/your/AdGuardHome.yaml";
     };
 
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = "adguardhome";
+      description = "User account under which AdGuard Home runs.";
+    };
+
+    group = lib.mkOption {
+      type = lib.types.str;
+      default = "adguardhome";
+      description = "Group under which AdGuard Home runs.";
+    };
+
+    dataDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/var/lib/adguardhome";
+      description = "The working directory and data directory for AdGuard Home.";
+    };
+
     extraArgs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
@@ -46,14 +64,14 @@ in
       }
     ];
     environment.systemPackages = [ cfg.package ];
-    users.users.adguardhome = {
+    users.users.${cfg.user} = {
       isSystemUser = true;
-      group = "adguardhome";
+      inherit (cfg) group;
     };
-    users.groups.adguardhome = { };
+    users.groups.${cfg.group} = { };
     systemd.services.adguardhome =
       let
-        workDir = "/var/lib/adguardhome";
+        workDir = cfg.dataDir;
         pidFile = "/run/adguardhome/AdGuardHome.pid";
         configFile = "${workDir}/AdGuardHome.yaml";
       in
@@ -77,11 +95,13 @@ in
           WorkingDirectory = workDir;
           AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
           CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-          User = "adguardhome";
-          Group = "adguardhome";
+          User = cfg.user;
+          Group = cfg.group;
           RuntimeDirectory = "adguardhome";
           RuntimeDirectoryPreserve = true;
-          StateDirectory = "adguardhome";
+          StateDirectory = lib.mkIf (lib.hasPrefix "/var/lib/" cfg.dataDir) (
+            lib.removePrefix "/var/lib/" cfg.dataDir
+          );
           StateDirectoryMode = "0700";
           Restart = "on-failure";
           # Security

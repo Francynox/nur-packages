@@ -8,13 +8,17 @@ let
   cfg = config.services.francynox.kea;
 
   commonServiceConfig = {
-    User = "kea";
-    Group = "kea";
-    ConfigurationDirectory = "kea";
+    User = cfg.user;
+    Group = cfg.group;
+    ConfigurationDirectory = lib.mkIf (lib.hasPrefix "/etc/" cfg.configDir) (
+      lib.removePrefix "/etc/" cfg.configDir
+    );
     RuntimeDirectory = "kea";
     RuntimeDirectoryPreserve = true;
     RuntimeDirectoryMode = "0750";
-    StateDirectory = "kea";
+    StateDirectory = lib.mkIf (lib.hasPrefix "/var/lib/" cfg.dataDir) (
+      lib.removePrefix "/var/lib/" cfg.dataDir
+    );
     StateDirectoryMode = "0750";
     CacheDirectory = "kea";
     Restart = "on-failure";
@@ -124,6 +128,30 @@ in
       description = "The Kea package (from francynox NUR) to use for all Kea services.";
     };
 
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = "kea";
+      description = "User account under which Kea runs.";
+    };
+
+    group = lib.mkOption {
+      type = lib.types.str;
+      default = "kea";
+      description = "Group under which Kea runs.";
+    };
+
+    dataDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/var/lib/kea";
+      description = "The working directory and data directory for Kea.";
+    };
+
+    configDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/etc/kea";
+      description = "The configuration directory for Kea.";
+    };
+
     ctrl-agent = mkKeaComponent "Control Agent" "Kea Control Agent configuration (francynox NUR version).";
 
     dhcp4 = mkKeaComponent "DHCPv4 Server" "Kea DHCPv4 Server configuration (francynox NUR version).";
@@ -146,11 +174,11 @@ in
           {
             environment.systemPackages = [ cfg.package ];
 
-            users.users.kea = {
+            users.users.${cfg.user} = {
               isSystemUser = true;
-              group = "kea";
+              inherit (cfg) group;
             };
-            users.groups.kea = { };
+            users.groups.${cfg.group} = { };
           }
 
           (mkKeaService {
