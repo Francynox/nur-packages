@@ -86,7 +86,7 @@ in
           ORIGINAL_CONFIG_FILE="${cfg.configFile}"
           WORKING_FILE="${configFile}"
 
-          cp -n "$ORIGINAL_CONFIG_FILE" "$WORKING_FILE"
+          cp -f "$ORIGINAL_CONFIG_FILE" "$WORKING_FILE"
           chmod 600 "$WORKING_FILE"
         '';
         restartTriggers = cfg.extraRestartTriggers;
