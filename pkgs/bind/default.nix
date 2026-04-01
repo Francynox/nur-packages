@@ -7,6 +7,7 @@
   ninja,
   perl,
   pkg-config,
+  cmake,
   # runtime
   liburcu,
   libuv,
@@ -19,14 +20,15 @@
   zlib,
   libidn2,
   libedit,
+  lmdb,
 }:
 stdenv.mkDerivation rec {
   pname = "bind";
-  version = "9.21.20";
+  version = "9.21.21";
 
   src = fetchurl {
     url = "https://downloads.isc.org/isc/${pname}9/${version}/${pname}-${version}.tar.xz";
-    hash = "sha256-qBL3DPU3AXF242HgRZxekvD6liejNu3xU8MIATJvf2s=";
+    hash = "sha256-ROv66LgrSU9cxHgbBE+9TIZ7ZNwirpxiyRl6qxY4kRI=";
   };
 
   patches = [
@@ -44,7 +46,7 @@ stdenv.mkDerivation rec {
     (lib.mesonEnable "idn" true)
     (lib.mesonEnable "jemalloc" true)
     (lib.mesonEnable "line" true)
-    (lib.mesonEnable "lmdb" false)
+    (lib.mesonOption "named-lto" "full")
     (lib.mesonEnable "stats-json" true)
     (lib.mesonEnable "stats-xml" true)
     (lib.mesonEnable "tracing" false)
@@ -58,6 +60,7 @@ stdenv.mkDerivation rec {
     ninja
     perl
     pkg-config
+    cmake
   ];
 
   buildInputs = [
@@ -72,6 +75,7 @@ stdenv.mkDerivation rec {
     zlib
     libidn2
     libedit
+    lmdb
   ];
 
   passthru.updateScript = ./update.sh;
