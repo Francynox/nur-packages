@@ -7,6 +7,7 @@
   ninja,
   perl,
   pkg-config,
+  cmake,
   # runtime
   liburcu,
   libuv,
@@ -19,6 +20,7 @@
   zlib,
   libidn2,
   libedit,
+  lmdb,
 }:
 stdenv.mkDerivation rec {
   pname = "bind";
@@ -44,7 +46,7 @@ stdenv.mkDerivation rec {
     (lib.mesonEnable "idn" true)
     (lib.mesonEnable "jemalloc" true)
     (lib.mesonEnable "line" true)
-    (lib.mesonEnable "lmdb" false)
+    (lib.mesonOption "named-lto" "full")
     (lib.mesonEnable "stats-json" true)
     (lib.mesonEnable "stats-xml" true)
     (lib.mesonEnable "tracing" false)
@@ -58,6 +60,7 @@ stdenv.mkDerivation rec {
     ninja
     perl
     pkg-config
+    cmake
   ];
 
   buildInputs = [
@@ -72,6 +75,7 @@ stdenv.mkDerivation rec {
     zlib
     libidn2
     libedit
+    lmdb
   ];
 
   passthru.updateScript = ./update.sh;
