@@ -101,7 +101,7 @@ in
         restartTriggers = cfg.extraRestartTriggers;
         serviceConfig = {
           Type = "notify";
-          ExecStart = "${cfg.package}/bin/unbound -d -c ${configFile} ${lib.escapeShellArgs cfg.extraArgs}";
+          ExecStart = "${cfg.package}/bin/unbound -d -p -c ${configFile} ${lib.escapeShellArgs cfg.extraArgs}";
           ExecReload = "${cfg.package}/bin/unbound-control -c ${configFile} reload";
           ExecStop = "${cfg.package}/bin/unbound-control -c ${configFile} stop";
           AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
