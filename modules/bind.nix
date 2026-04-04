@@ -102,7 +102,7 @@ in
           exit 1;
         fi
       '';
-      restartTriggers = cfg.extraRestartTriggers;
+      restartTriggers = cfg.extraRestartTriggers ++ [ cfg.configFile ];
       serviceConfig = {
         Type = "notify";
         ExecStart = "${cfg.package}/bin/named -f -c ${cfg.configFile} ${lib.escapeShellArgs cfg.extraArgs}";

@@ -89,7 +89,7 @@ in
           cp -f "$ORIGINAL_CONFIG_FILE" "$WORKING_FILE"
           chmod 600 "$WORKING_FILE"
         '';
-        restartTriggers = cfg.extraRestartTriggers;
+        restartTriggers = cfg.extraRestartTriggers ++ [ cfg.configFile ];
         serviceConfig = {
           ExecStart = "${cfg.package}/bin/adguardhome -c ${configFile} --work-dir ${workDir} --pidfile ${pidFile} --no-check-update -s run ${lib.escapeShellArgs cfg.extraArgs}";
           WorkingDirectory = workDir;

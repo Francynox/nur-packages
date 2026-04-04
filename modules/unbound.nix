@@ -98,7 +98,7 @@ in
         preStart = ''
           ${cfg.package}/bin/unbound-anchor
         '';
-        restartTriggers = cfg.extraRestartTriggers;
+        restartTriggers = cfg.extraRestartTriggers ++ [ cfg.configFile ];
         serviceConfig = {
           Type = "notify";
           ExecStart = "${cfg.package}/bin/unbound -d -p -c ${configFile} ${lib.escapeShellArgs cfg.extraArgs}";
