@@ -102,6 +102,7 @@ in
         echo "Checking mutable configs for local modifications..."
         EXIT_ON_CHANGE=0
         CURRENT_HOST=$(hostname)
+        CHANGED_FILES=""
 
         ${concatStringsSep "\n" (
           mapAttrsToList (name: conf: ''
@@ -117,10 +118,8 @@ in
                 echo "  [!] Configuration drift detected: $CHECK_FILE differs from pristine."
                 
                 ${optionalString conf.notifyOnUpgrade ''
-                  # Send Telegram notification if the command is available
-                  if [ -x ${telegramNotifyScript}/bin/telegram-notify ]; then
-                    ${telegramNotifyScript}/bin/telegram-notify "*Configuration Drift Detected*%0A%0A*Host:* $CURRENT_HOST%0A*File:* \`$CHECK_FILE\` differs from pristine."
-                  fi
+                  # Collect files that need notification
+                  CHANGED_FILES="$CHANGED_FILES$CHECK_FILE%0A"
                 ''}
 
                 ${optionalString conf.stopAutoUpgrade ''
@@ -135,6 +134,16 @@ in
             fi
           '') cfg
         )}
+
+        if [ -n "$CHANGED_FILES" ]; then
+          if [ -x ${telegramNotifyScript}/bin/telegram-notify ]; then
+            STATUS_MSG="Upgrade will proceed."
+            if [ "$EXIT_ON_CHANGE" -eq 1 ]; then
+              STATUS_MSG="Upgrade aborted!"
+            fi
+            ${telegramNotifyScript}/bin/telegram-notify "*Configuration Drift Detected*%0A%0A*Host:* $CURRENT_HOST%0A*Status:* $STATUS_MSG%0A%0A*Files with changes:*%0A\`\`\`%0A$CHANGED_FILES\`\`\`"
+          fi
+        fi
 
         if [ "$EXIT_ON_CHANGE" -eq 1 ]; then
           echo "Aborting auto-upgrade."
