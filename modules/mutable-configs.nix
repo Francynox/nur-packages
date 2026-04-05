@@ -114,7 +114,7 @@ in
             CHECK_FILE="${if conf.pathToCheck != null then conf.pathToCheck else "$TARGET_FILE"}"
 
             if [ -f "$CHECK_FILE" ] && [ -f "$PRISTINE_FILE" ]; then
-              if ! cmp -s "$CHECK_FILE" "$PRISTINE_FILE"; then
+              if ! diff -q -b "$CHECK_FILE" "$PRISTINE_FILE"; then
                 echo "  [!] Configuration drift detected: $CHECK_FILE differs from pristine."
                 
                 ${optionalString conf.notifyOnUpgrade ''
