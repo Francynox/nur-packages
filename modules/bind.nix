@@ -25,6 +25,12 @@ in
       example = lib.literalExpression "/path/to/your/named.conf";
     };
 
+    rndcKeyFile = lib.mkOption {
+      type = lib.types.path;
+      default = cfg.configDir + "/rndc.key";
+      description = "Path to the rndc.key file.";
+    };
+
     user = lib.mkOption {
       type = lib.types.str;
       default = "bind";
@@ -91,14 +97,11 @@ in
       wantedBy = [ "multi-user.target" ];
       preStart = ''
         ${lib.concatStringsSep "\n" (
-          lib.mapAttrsToList (
-            destName: srcPath:
-            "cp -n ${srcPath} ${cfg.dataDir}/${destName} && chmod 600 ${cfg.dataDir}/${destName}"
-          ) cfg.zoneFiles
+          lib.mapAttrsToList (destName: srcPath: "cp -n ${srcPath} ${cfg.dataDir}/${destName}") cfg.zoneFiles
         )}
 
-        if [ ! -r ${cfg.configDir}/rndc.key ]; then
-          echo "${cfg.configDir}/rndc.key file not found or not readable by user '${cfg.user}'. Cannot start bind service.";
+        if [ ! -r ${cfg.rndcKeyFile} ]; then
+          echo "${cfg.rndcKeyFile} file not found or not readable by user '${cfg.user}'. Cannot start bind service.";
           exit 1;
         fi
       '';
@@ -106,8 +109,8 @@ in
       serviceConfig = {
         Type = "notify";
         ExecStart = "${cfg.package}/bin/named -f -c ${cfg.configFile} ${lib.escapeShellArgs cfg.extraArgs}";
-        ExecReload = "${cfg.package}/bin/rndc reload";
-        ExecStop = "${cfg.package}/bin/rndc stop";
+        ExecReload = "${cfg.package}/bin/rndc -k ${cfg.rndcKeyFile} reload";
+        ExecStop = "${cfg.package}/bin/rndc -k ${cfg.rndcKeyFile} stop";
         AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
         CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
         User = cfg.user;
