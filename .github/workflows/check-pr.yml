@@ -39,3 +39,11 @@ jobs:
       - name: Build & Check all packages
         run: |
           nix run github:Mic92/nix-fast-build -- --skip-cached --no-nom --flake .#checks --override-input nixpkgs ${{ matrix.nixpkgs }}
+
+  check-pr-success:
+    name: "Check PR Success"
+    runs-on: ubuntu-latest
+    needs: [check-packages]
+    steps:
+      - name: Success
+        run: echo "Check PR completed successfully"
