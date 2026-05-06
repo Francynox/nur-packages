@@ -1,14 +1,11 @@
 name: "Check Pull Request"
-
 on:
   pull_request:
     branches:
       - main
-
 concurrency:
   cancel-in-progress: true
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-
 jobs:
   check-packages:
     runs-on: ubuntu-latest
@@ -19,27 +16,22 @@ jobs:
           - github:NixOS/nixpkgs/nixos-unstable
           - github:NixOS/nixpkgs/nixos-25.11
       fail-fast: false
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-
       - name: Install nix
         uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup Cachix (Read-Only)
         uses: cachix/cachix-action@v17
         with:
           name: francynox
-
       - name: Build & Check all packages
         run: |
           nix run github:Mic92/nix-fast-build -- --skip-cached --no-nom --flake .#checks --override-input nixpkgs ${{ matrix.nixpkgs }}
-
   check-pr-success:
     name: "Check PR Success"
     runs-on: ubuntu-latest

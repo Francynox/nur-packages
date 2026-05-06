@@ -1,10 +1,8 @@
 name: "Auto-Update Packages"
-
 on:
   workflow_dispatch:
   schedule:
     - cron: 41 15 * * *
-
 jobs:
   list-all-packages:
     runs-on: ubuntu-latest
@@ -13,21 +11,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-
       - name: List all packages
         id: set-matrix
         run: |
           PACKAGES_JSON=$(nix flake show --json . | jq -c '[.packages | .[] | keys[]] | unique')
           echo "Found packages: $PACKAGES_JSON"
           echo "packages=$PACKAGES_JSON" >> $GITHUB_OUTPUT
-
   create-update-prs:
     needs: list-all-packages
     if: needs.list-all-packages.outputs.packages != '[]'
@@ -39,7 +34,6 @@ jobs:
       matrix:
         package: ${{ fromJson(needs.list-all-packages.outputs.packages) }}
       fail-fast: false
-
     steps:
       - name: Generate GitHub App Token
         uses: actions/create-github-app-token@v3
@@ -47,12 +41,10 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
@@ -60,7 +52,6 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-
       - name: Run update script for ${{ matrix.package }}
         run: |
           SCRIPT_PATH=$(nix-build ./maintainers/scripts/update.nix \
@@ -68,14 +59,12 @@ jobs:
             --no-out-link)
 
           "$SCRIPT_PATH/bin/update-${{ matrix.package }}"
-
       - name: Create Pull Request if changes detected
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.generate-token.outputs.token }}
           author: Pkgs updater Bot <actions@github.com>
           committer: Pkgs updater Bot <actions@github.com>
-
           commit-message: "auto-update: Update ${{ matrix.package }}"
           branch: "auto-update/${{ matrix.package }}"
           title: "Auto-update: ${{ matrix.package }}"

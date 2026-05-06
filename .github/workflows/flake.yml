@@ -1,5 +1,4 @@
 name: Bump flake.lock
-
 on:
   schedule:
     - cron: 23 18 */2 * *
@@ -10,7 +9,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-
     steps:
       - name: Generate GitHub App Token
         uses: actions/create-github-app-token@v3
@@ -18,30 +16,26 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-
       - name: Update flake.lock
         id: update
         run: |
           nix flake update
-          
+
           if [[ -n $(git status --porcelain flake.lock) ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "No updates found."
           fi
-
       - name: Create Pull Request
         if: steps.update.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
@@ -54,12 +48,11 @@ jobs:
           title: "chore(deps): bump flake.lock"
           body: |
             Automated update of `flake.lock`.
-            
+
             This PR updates the flake inputs to their latest versions.
             If the CI passes, this will be auto-merged.
           branch: "chore/update-flake-lock"
           delete-branch: true
-
       - name: Enable Auto-Merge
         if: steps.update.outputs.changed == 'true'
         env:
