@@ -50,7 +50,7 @@ pkgs.testers.runNixOSTest {
         {
           enable = true;
           configFile = namedConfFile;
-          zoneFiles = {
+          staticZoneFiles = {
             "db.example.com" = zoneFile;
           };
         };

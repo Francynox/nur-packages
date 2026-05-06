@@ -55,11 +55,21 @@ in
       description = "The configuration directory for BIND.";
     };
 
-    zoneFiles = lib.mkOption {
+    staticZoneFiles = lib.mkOption {
       type = lib.types.attrsOf lib.types.path;
       default = { };
       description = ''
-        An attribute set of zone files to be copied into the zones directory. (/var/lib/bind)
+        An attribute set of static zone files to be forcefully copied into the zones directory
+        on every restart. The attribute name will be the destination filename.
+      '';
+    };
+
+    dynamicZoneFiles = lib.mkOption {
+      type = lib.types.attrsOf lib.types.path;
+      default = { };
+      description = ''
+        An attribute set of dynamic zone templates (e.g. for DHCP/DDNS) to be copied into the zones
+        directory ONLY if they do not already exist. 
         The attribute name will be the destination filename.
       '';
     };
@@ -97,7 +107,17 @@ in
       wantedBy = [ "multi-user.target" ];
       preStart = ''
         ${lib.concatStringsSep "\n" (
-          lib.mapAttrsToList (destName: srcPath: "cp -n ${srcPath} ${cfg.dataDir}/${destName}") cfg.zoneFiles
+          lib.mapAttrsToList (destName: srcPath: ''
+            mkdir -p "$(dirname "${cfg.dataDir}/${destName}")"
+            cp -f ${srcPath} "${cfg.dataDir}/${destName}"
+          '') cfg.staticZoneFiles
+        )}
+
+        ${lib.concatStringsSep "\n" (
+          lib.mapAttrsToList (destName: srcPath: ''
+            mkdir -p "$(dirname "${cfg.dataDir}/${destName}")"
+            cp -n ${srcPath} "${cfg.dataDir}/${destName}"
+          '') cfg.dynamicZoneFiles
         )}
 
         if [ ! -r ${cfg.rndcKeyFile} ]; then
