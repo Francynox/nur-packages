@@ -5,6 +5,7 @@
   qemu_kvm,
   # build time
   perl,
+  python3Packages,
   # runtime
   libuuid,
   ...
@@ -51,10 +52,15 @@ minimalQemu.overrideAttrs (super: rec {
   separateDebugInfo = false;
 
   patches = [
-    "${proxmoxPatchSrc}/debian/patches/pve/0027-PVE-Backup-add-vma-backup-format-code.patch"
+    "${proxmoxPatchSrc}/debian/patches/pve/0026-PVE-Backup-add-vma-backup-format-code.patch"
   ];
 
-  nativeBuildInputs = super.nativeBuildInputs ++ [ perl ];
+  nativeBuildInputs = super.nativeBuildInputs ++ [
+    perl
+    python3Packages.qemu-qmp
+    python3Packages.setuptools
+    python3Packages.wheel
+  ];
   buildInputs = super.buildInputs ++ [ libuuid ];
 
   postInstall = ''
