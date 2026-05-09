@@ -5,6 +5,7 @@
   qemu_kvm,
   # build time
   perl,
+  python3Packages,
   # runtime
   libuuid,
   ...
@@ -12,12 +13,12 @@
 let
   proxmoxPatchSrc = fetchFromGitHub rec {
     pname = "pve-qemu-src";
-    version = "ed7782b2471fc8f3888c3c4c0329d4d124cf38cb";
+    version = "3ca3727c0c3e6ee853f752ffbcec11679ebfbac9";
 
     owner = "proxmox";
     repo = "pve-qemu";
     rev = version;
-    hash = "sha256-sP1IeDujfw+DLuP+adNddo4Guy+CVp9tqRgLymTdQnI=";
+    hash = "sha256-huPJNksHUbjPBgSlCnoPLCZPCRx65sOh7aoCzZjO0S0=";
   };
 
   # Disable unneeded features to reduce build time
@@ -40,21 +41,26 @@ let
 in
 minimalQemu.overrideAttrs (super: rec {
   pname = "proxmox-vma";
-  version = "10.2.1";
+  version = "11.0.0";
 
   src = fetchurl {
     url = "https://download.qemu.org/qemu-${version}.tar.xz";
-    hash = "sha256-o3F0d9jiyE1jC//7wg9s0yk+tFqh5trG0MwnaJmRyeE=";
+    hash = "sha256-wEyjYBJlPzLRHGdNNwz1KnEOfT8Ywti2PkkyBSpIVNY=";
   };
 
   outputs = [ "out" ];
   separateDebugInfo = false;
 
   patches = [
-    "${proxmoxPatchSrc}/debian/patches/pve/0027-PVE-Backup-add-vma-backup-format-code.patch"
+    "${proxmoxPatchSrc}/debian/patches/pve/0026-PVE-Backup-add-vma-backup-format-code.patch"
   ];
 
-  nativeBuildInputs = super.nativeBuildInputs ++ [ perl ];
+  nativeBuildInputs = super.nativeBuildInputs ++ [
+    perl
+    python3Packages.qemu-qmp
+    python3Packages.setuptools
+    python3Packages.wheel
+  ];
   buildInputs = super.buildInputs ++ [ libuuid ];
 
   postInstall = ''
