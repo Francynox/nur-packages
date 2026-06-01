@@ -16,7 +16,7 @@ jobs:
         nixpkgs:
           - github:NixOS/nixpkgs/nixpkgs-unstable
           - github:NixOS/nixpkgs/nixos-unstable
-          - github:NixOS/nixpkgs/nixos-25.11
+          - github:NixOS/nixpkgs/nixos-26.05
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
