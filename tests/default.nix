@@ -12,4 +12,5 @@
   auto-update-pull = import ./auto-update-pull.nix { inherit pkgs modules; };
   growpart = import ./growpart.nix { inherit pkgs modules; };
   mutable-configs = import ./mutable-configs.nix { inherit pkgs modules; };
+  telegram-notify = import ./telegram-notify.nix { inherit pkgs modules; };
 }
