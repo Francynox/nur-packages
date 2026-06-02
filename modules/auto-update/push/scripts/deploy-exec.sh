@@ -34,7 +34,7 @@ handle_exit() {
 }
 trap handle_exit EXIT
 
-export NIX_SSHOPTS="-i @sshKeyFile@ -o StrictHostKeyChecking=accept-new"
+export NIX_SSHOPTS="-i @sshKeyFile@ -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/run/deploy-webhook/known_hosts"
 
 echo "Building and deploying configuration to attribute #$HOST at IP $IP as user $TARGET_USER..."
 nixos-rebuild switch \
