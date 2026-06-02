@@ -37,8 +37,11 @@ in
       name: opts:
       lib.nameValuePair "growpart-${name}" {
         description = "Grow partition ${toString opts.partition} on ${opts.device}";
-        wantedBy = [ "local-fs.target" ];
-        before = opts.before ++ [ "shutdown.target" ];
+        wantedBy = [ "local-fs-pre.target" ];
+        before = opts.before ++ [
+          "local-fs-pre.target"
+          "shutdown.target"
+        ];
         conflicts = [ "shutdown.target" ];
         unitConfig.DefaultDependencies = false;
         serviceConfig = {
@@ -48,7 +51,11 @@ in
           SuccessExitStatus = "0 1";
         };
         script = ''
+          echo "Expanding partition layout for ${opts.device} (part ${toString opts.partition})..."
           "${pkgs.cloud-utils.guest}/bin/growpart" "${opts.device}" "${toString opts.partition}"
+
+          echo "Settling kernel udev events..."
+          ${pkgs.systemd}/bin/udevadm settle
         '';
       }
     ) cfg;

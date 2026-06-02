@@ -26,14 +26,20 @@ let
       exit 1
     fi
 
-    BOT_TOKEN=$(cat "${cfg.botTokenFile}")
-    CHAT_ID=$(cat "${cfg.chatIdFile}")
+    BOT_TOKEN=$(cat "${cfg.botTokenFile}" | tr -d '\n\r ')
+    CHAT_ID=$(cat "${cfg.chatIdFile}" | tr -d '\n\r ')
     MESSAGE="$1"
 
-    ${pkgs.curl}/bin/curl -s -X POST "https://api.telegram.org/bot''${BOT_TOKEN}/sendMessage" \
+    if ! ${pkgs.curl}/bin/curl --fail-with-body -s -X POST "https://api.telegram.org/bot''${BOT_TOKEN}/sendMessage" \
       -d chat_id="''${CHAT_ID}" \
       -d text="''${MESSAGE}" \
-      -d parse_mode="Markdown" > /dev/null
+      -d parse_mode="Markdown"; then
+
+      echo "ERROR: Telegram API rejected the notification payload." >&2
+      exit 1
+    fi
+
+    echo "[telegram-notify] Message dispatched successfully."
   '';
 in
 {
