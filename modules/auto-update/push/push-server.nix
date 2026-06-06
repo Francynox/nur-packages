@@ -7,7 +7,7 @@
 let
   cfg = config.services.francynox.auto-update.push-server;
   cfg-webhook = config.services.webhook;
-  cfg-telegram = config.services.francynox.telegram-notify;
+  cfg-telegram = config.services.francynox.telegram-notify.package;
 
   deployWebhookScript = pkgs.replaceVarsWith {
     src = ./scripts/deploy-webhook.sh;
@@ -34,8 +34,7 @@ let
         pkgs.openssh
       ];
       inherit (cfg) targetUser flakePath sshKeyFile;
-      telegramNotifyBin =
-        if cfg.telegramNotify then "${cfg-telegram.package}/bin/telegram-notify" else "";
+      telegramNotifyBin = if cfg.telegramNotify then "${cfg-telegram}/bin/telegram-notify" else "";
     };
   };
 in

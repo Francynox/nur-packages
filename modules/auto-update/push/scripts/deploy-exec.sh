@@ -27,9 +27,9 @@ notify() {
 handle_exit() {
   exit_code=$?
   if [ $exit_code -eq 0 ]; then
-    notify "✅ *Deploy successful*: $HOST"
+    notify "✅ <b>Deploy successful</b>: $HOST"
   else
-    notify "❌ *Deploy failed*: $HOST"
+    notify "❌ <b>Deploy failed</b>: $HOST"
   fi
 }
 trap handle_exit EXIT

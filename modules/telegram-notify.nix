@@ -16,7 +16,7 @@ let
       exit 1
     fi
 
-    if ! echo -n "$1" | ${pkgs.netcat-openbsd}/bin/nc -N -U /run/telegram-notify/notify.sock; then
+    if ! ${pkgs.coreutils}/bin/printf "%b" "$1" | ${pkgs.netcat-openbsd}/bin/nc -N -U /run/telegram-notify/notify.sock; then
       echo "Error: Failed to write to telegram-notify socket" >&2
       exit 1
     fi
@@ -43,10 +43,12 @@ let
     BOT_TOKEN=$(cat "${cfg.botTokenFile}" | tr -d '\n\r ')
     CHAT_ID=$(cat "${cfg.chatIdFile}" | tr -d '\n\r ')
 
+    TEXT=$(printf "🖥️ <b>${config.networking.hostName}</b>\n\n%s" "''${MESSAGE}")
+
     if ! curl --fail-with-body -s -X POST "https://api.telegram.org/bot''${BOT_TOKEN}/sendMessage" \
       -d chat_id="''${CHAT_ID}" \
-      -d text="''${MESSAGE}" \
-      -d parse_mode="Markdown"; then
+      --data-urlencode "text=''${TEXT}" \
+      -d parse_mode="HTML"; then
 
       echo "ERROR: Telegram API rejected the notification payload." >&2
       exit 1

@@ -119,7 +119,7 @@ in
                 
                 ${optionalString conf.notifyOnUpgrade ''
                   # Collect files that need notification
-                  CHANGED_FILES="$CHANGED_FILES$CHECK_FILE%0A"
+                  CHANGED_FILES="$CHANGED_FILES$CHECK_FILE\n"
                 ''}
 
                 ${optionalString conf.stopAutoUpgrade ''
@@ -141,7 +141,7 @@ in
             if [ "$EXIT_ON_CHANGE" -eq 1 ]; then
               STATUS_MSG="Upgrade aborted!"
             fi
-            ${telegramNotifyScript}/bin/telegram-notify "*Configuration Drift Detected*%0A%0A*Host:* $CURRENT_HOST%0A*Status:* $STATUS_MSG%0A%0A*Files with changes:*%0A\`\`\`%0A$CHANGED_FILES\`\`\`"
+            ${telegramNotifyScript}/bin/telegram-notify "⚠️ <b>Configuration Drift Detected</b>\n\n<b>Host:</b> $CURRENT_HOST\n<b>Status:</b> $STATUS_MSG\n\n<b>Files with changes:</b>\n<pre>$CHANGED_FILES</pre>"
           fi
         fi
 
