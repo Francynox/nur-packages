@@ -1,6 +1,6 @@
 # Francynox Nix User Repository
 
-![Build and populate cache](https://github.com/Francynox/nur-packages/workflows/Build%20and%20populate%20cache/badge.svg)
+![Build and populate cache](https://github.com/Francynox/nur-repository/workflows/Build%20and%20populate%20cache/badge.svg)
 [![Cachix Cache](https://img.shields.io/badge/cachix-francynox-blue.svg)](https://francynox.cachix.org)
 
 **My personal [NUR](https://github.com/nix-community/NUR) repository**
@@ -8,7 +8,7 @@
 Run packages directly from this repository (no cache):
 
 ```sh
-nix run github:Francynox/nur-packages#some-pakcage
+nix run github:Francynox/nur-repository#some-pakcage
 ```
 
 Use this repository in `flake.nix`:
@@ -25,7 +25,7 @@ Use this repository in `flake.nix`:
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nur-francynox = {
-      url = "github:francynox/nur-packages";
+      url = "github:francynox/nur-repository";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
